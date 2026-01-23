@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Auction System</title>
+</head>
+<body>
+<h1>Welcome to Auction System</h1>
+<p>Backend Status: <span id="status">Checking...</span></p>
+
+<script>
+    // Test gọi API vào Backend
+    fetch('http://localhost:8080/api/check')
+        .then(res => res.text())
+        .then(data => document.getElementById('status').innerText = data)
+        .catch(err => document.getElementById('status').innerText = "Offline");
+</script>
+</body>
+</html>
