@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: auction_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: auction_db       # DB tên là auction_db
+      MYSQL_ROOT_PASSWORD: root        # Mật khẩu là root
+    ports:
+      - "3307:3306"                    # Map cổng 3307 máy thật -> 3306 máy ảo
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
