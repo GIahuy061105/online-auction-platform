@@ -1,5 +1,6 @@
-package com.example.auction_backend.Model;
+package com.example.auction_backend.model;
 
+import com.example.auction_backend.enums.AuctionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -49,10 +50,4 @@ public class Auction {
     // Danh sách các lượt bid của phiên này
     @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL)
     private List<Bid> bids;
-}
-// Trạng thái cuộc đấu giá
-enum AuctionStatus {
-    OPEN,    // Đang diễn ra
-    CLOSED,  // Đã kết thúc
-    WAITING  // Sắp diễn ra
 }

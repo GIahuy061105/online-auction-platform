@@ -1,5 +1,6 @@
-package com.example.auction_backend.Model;
+package com.example.auction_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -27,6 +28,7 @@ public class Bid {
     private User user;
 
     // Đặt cho phiên nào?
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auction_id", nullable = false)
     private Auction auction;
