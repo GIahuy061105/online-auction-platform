@@ -38,11 +38,12 @@ public class AuctionService {
         auction.setProductName(request.getProductName());
         auction.setDescription(request.getDescription());
         auction.setStartingPrice(request.getStartingPrice());
-        auction.setCurrentPrice(request.getStartingPrice()); // Giá hiện tại = Giá khởi điểm
+        auction.setCurrentPrice(request.getStartingPrice());
+        auction.setStepPrice(request.getStepPrice());
         auction.setStartTime(request.getStartTime());
         auction.setEndTime(request.getEndTime());
-        auction.setStatus(AuctionStatus.OPEN); // Mặc định là OPEN
-        auction.setSeller(seller); // Gán người bán là người đang đăng nhập
+        auction.setStatus(AuctionStatus.OPEN);
+        auction.setSeller(seller);
 
         return auctionRepository.save(auction);
     }
@@ -58,33 +59,44 @@ public class AuctionService {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
 
+        // Kiểm tra giá đặt
+        BigDecimal minNextPrice = auction.getCurrentPrice().add(auction.getStepPrice());
+        if(bidAmount.compareTo(minNextPrice) < 0){
+            throw new RuntimeException("Giá đặt không hợp lệ! Phải tối thiểu là: " + minNextPrice);
+        }
+        // Kiểm tra số dư
+        if(bidder.getBalance().compareTo(bidAmount) < 0){
+            throw new RuntimeException("Số dư không đủ để đặt mức giá này!");
+        }
         // Kiểm tra hợp lệ (Validate)
         // 1. Phiên này còn mở không?
         if (auction.getStatus() != AuctionStatus.OPEN) {
             throw new RuntimeException("Phiên đấu giá đã kết thúc!");
         }
-        // 2. Đã hết giờ chưa?
+        // Đã hết giờ chưa?
         if (LocalDateTime.now().isAfter(auction.getEndTime())) {
             auction.setStatus(AuctionStatus.CLOSED);
             auctionRepository.save(auction);
             throw new RuntimeException("Đã hết thời gian đấu giá!");
         }
-        // 3. Ko đc đấu giá sản phẩm của mình
+        // Ko đc đấu giá sản phẩm của mình
         if (auction.getSeller().getId().equals(bidder.getId())) {
             throw new RuntimeException("Bạn không thể tự đấu giá sản phẩm của mình!");
         }
-        // 4. Tiền đặt có cao hơn giá hiện tại không?
+        // Tiền đặt có cao hơn giá hiện tại không?
         if (bidAmount.compareTo(auction.getCurrentPrice()) <= 0) {
             throw new RuntimeException("Giá đặt phải cao hơn giá hiện tại (" + auction.getCurrentPrice() + ")");
         }
-        // 5. Ví có đủ tiền không?
+        // Ví có đủ tiền không?
         if (bidder.getBalance().compareTo(bidAmount) < 0) {
             throw new RuntimeException("Số dư không đủ! (Ví: " + bidder.getBalance() + ")");
         }
-
-        // Xử lý giao dịch
-        // (Tuần sau ta sẽ làm logic hoàn tiền cho người thua sau)
-
+        User PreviousWinner = auction.getWinner();
+        if(PreviousWinner != null){
+            BigDecimal refundAmount = auction.getCurrentPrice();
+            PreviousWinner.setBalance(PreviousWinner.getBalance().add(refundAmount));
+            userRepository.save(PreviousWinner);
+        }
         // Trừ tiền người đấu giá
         bidder.setBalance(bidder.getBalance().subtract(bidAmount));
         userRepository.save(bidder);

@@ -26,7 +26,10 @@ public class Auction {
     @Column(nullable = false)
     private BigDecimal startingPrice; // Giá khởi điểm
 
-    private BigDecimal currentPrice;  // Giá cao nhất hiện tại
+    private BigDecimal currentPrice;// Giá cao nhất hiện tại
+
+    @Column(nullable = false)
+    private BigDecimal stepPrice;
 
     @Column(nullable = false)
     private LocalDateTime startTime;

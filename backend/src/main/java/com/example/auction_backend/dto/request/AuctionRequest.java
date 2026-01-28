@@ -9,6 +9,7 @@ public class AuctionRequest {
     private String productName;
     private String description;
     private BigDecimal startingPrice;
+    private BigDecimal stepPrice;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 }

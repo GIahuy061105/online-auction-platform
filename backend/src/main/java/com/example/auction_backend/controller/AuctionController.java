@@ -1,6 +1,7 @@
 package com.example.auction_backend.controller;
 
 import com.example.auction_backend.dto.request.AuctionRequest;
+import com.example.auction_backend.dto.responce.AuctionResponse;
 import com.example.auction_backend.model.Auction;
 import com.example.auction_backend.service.AuctionService;
 import lombok.RequiredArgsConstructor;
@@ -17,17 +18,22 @@ public class AuctionController {
 
     private final AuctionService auctionService;
 
+    // Tạo phiên đấu giá
     @PostMapping("/create")
-    public ResponseEntity<Auction> createAuction(@RequestBody AuctionRequest request) {
-        return ResponseEntity.ok(auctionService.createAuction(request));
+    public ResponseEntity<AuctionResponse> createAuction(@RequestBody AuctionRequest request) {
+        Auction newAuction = auctionService.createAuction(request);
+        return ResponseEntity.ok(AuctionResponse.fromEntity(newAuction));
     }
+    // Lấy toàn bộ phiên đấu giá
     @GetMapping
-    public ResponseEntity<List<Auction>> getAllAuctions() {
-        return ResponseEntity.ok(auctionService.getAllAuctions());
+    public ResponseEntity<List<AuctionResponse>> getAllAuctions() {
+        return ResponseEntity.ok(
+                auctionService.getAllAuctions().stream()
+                        .map(AuctionResponse::fromEntity)
+                        .toList()
+        );
     }
-
-    // 3. API Đấu giá (Mới)
-    // POST: http://localhost:8080/api/auctions/{id}/bid?amount=500000
+    // API Đấu giá
     @PostMapping("/{id}/bid")
     public ResponseEntity<Auction> placeBid(
             @PathVariable Long id,
