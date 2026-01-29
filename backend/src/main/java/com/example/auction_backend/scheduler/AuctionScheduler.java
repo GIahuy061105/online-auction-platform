@@ -17,32 +17,37 @@ public class AuctionScheduler {
 
     private final AuctionRepository auctionRepository;
 
-    // Chạy mỗi 1 phút (60000ms) một lần
-    // fixedRate: Tính từ lúc bắt đầu chạy lần trước
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 60000) // Chạy mỗi 1 phút
     @Transactional
-    public void closeExpiredAuctions() {
-        // 1. Tìm các phiên đang OPEN mà giờ kết thúc < giờ hiện tại
-        List<Auction> expiredAuctions = auctionRepository.findByStatusAndEndTimeBefore(
-                AuctionStatus.OPEN,
-                LocalDateTime.now()
+    public void updateAuctionStatus() {
+        LocalDateTime now = LocalDateTime.now();
+
+        // --- NHIỆM VỤ 1: MỞ PHIÊN ĐẤU GIÁ (WAITING -> OPEN) ---
+        // Tìm những phiên đang WAITING mà giờ bắt đầu <= giờ hiện tại
+        List<Auction> startingAuctions = auctionRepository.findByStatusAndStartTimeBefore(
+                AuctionStatus.WAITING,
+                now
         );
 
-        if (expiredAuctions.isEmpty()) {
-            return;
+        if (!startingAuctions.isEmpty()) {
+            for (Auction auction : startingAuctions) {
+                auction.setStatus(AuctionStatus.OPEN);
+            }
+            auctionRepository.saveAll(startingAuctions);
         }
 
-        // 2. Duyệt qua từng phiên và đóng lại
-        for (Auction auction : expiredAuctions) {
-            auction.setStatus(AuctionStatus.CLOSED);
+        // --- NHIỆM VỤ 2: ĐÓNG PHIÊN ĐẤU GIÁ (OPEN -> CLOSED) ---
+        // Tìm những phiên đang OPEN mà giờ kết thúc <= giờ hiện tại
+        List<Auction> expiredAuctions = auctionRepository.findByStatusAndEndTimeBefore(
+                AuctionStatus.OPEN,
+                now
+        );
 
-            // Logic mở rộng sau này:
-            // - Nếu có người thắng (winner != null) -> Gửi email chúc mừng
-            // - Nếu không có người thắng -> Hoàn trả lại cho người bán
-            System.out.println("Robot: Đã đóng phiên đấu giá ID: " + auction.getId());
+        if (!expiredAuctions.isEmpty()) {
+            for (Auction auction : expiredAuctions) {
+                auction.setStatus(AuctionStatus.CLOSED);
+            }
+            auctionRepository.saveAll(expiredAuctions);
         }
-
-
-        auctionRepository.saveAll(expiredAuctions);
     }
 }

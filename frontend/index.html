@@ -1,19 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Auction System</title>
-</head>
-<body>
-<h1>Welcome to Auction System</h1>
-<p>Backend Status: <span id="status">Checking...</span></p>
-
-<script>
-    // Test gọi API vào Backend
-    fetch('http://localhost:8080/api/check')
-        .then(res => res.text())
-        .then(data => document.getElementById('status').innerText = data)
-        .catch(err => document.getElementById('status').innerText = "Offline");
-</script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

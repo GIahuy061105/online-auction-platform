@@ -42,9 +42,13 @@ public class AuctionService {
         auction.setStepPrice(request.getStepPrice());
         auction.setStartTime(request.getStartTime());
         auction.setEndTime(request.getEndTime());
-        auction.setStatus(AuctionStatus.OPEN);
         auction.setSeller(seller);
-
+        LocalDateTime now = LocalDateTime.now();
+        if(request.getStartTime().isAfter(now)){
+            auction.setStatus(AuctionStatus.WAITING);
+        }else{
+            auction.setStatus(AuctionStatus.OPEN);
+        }
         return auctionRepository.save(auction);
     }
     public List<Auction> getAllAuctions() {
@@ -82,6 +86,9 @@ public class AuctionService {
         // Ko đc đấu giá sản phẩm của mình
         if (auction.getSeller().getId().equals(bidder.getId())) {
             throw new RuntimeException("Bạn không thể tự đấu giá sản phẩm của mình!");
+        }
+        if(auction.getWinner() != null && auction.getWinner().getId().equals(bidder.getId())){
+            throw new RuntimeException("Bạn đang dẫn đầu rồi, không cần đặt thêm nữa!");
         }
         // Tiền đặt có cao hơn giá hiện tại không?
         if (bidAmount.compareTo(auction.getCurrentPrice()) <= 0) {

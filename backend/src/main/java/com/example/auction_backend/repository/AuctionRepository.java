@@ -10,4 +10,5 @@ import java.util.List;
 public interface AuctionRepository extends JpaRepository<Auction, Long> {
     // Sau này sẽ thêm các hàm như findByStatus(OPEN)...
     List<Auction> findByStatusAndEndTimeBefore(AuctionStatus status, LocalDateTime now);
+    List<Auction> findByStatusAndStartTimeBefore(AuctionStatus status, LocalDateTime now);
 }
