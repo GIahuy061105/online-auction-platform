@@ -44,6 +44,11 @@ public class AuctionService {
         auction.setEndTime(request.getEndTime());
         auction.setSeller(seller);
         LocalDateTime now = LocalDateTime.now();
+        if(request.getImageUrl() != null && !request.getImageUrl().isEmpty()){
+            auction.setImageUrl(auction.getImageUrl());
+        }else{
+            auction.setImageUrl("https://via.placeholder.com/400x200?text=No+Image");
+        }
         if(request.getStartTime().isAfter(now)){
             auction.setStatus(AuctionStatus.WAITING);
         }else{

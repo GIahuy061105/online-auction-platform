@@ -1,6 +1,7 @@
 import { Card, Button, Statistic, Tag, Modal, InputNumber, message, Form } from 'antd';
 import { ClockCircleOutlined, UserOutlined, RiseOutlined , StopOutlined, HourglassOutlined} from '@ant-design/icons';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 // Hàm format tiền Việt Nam
@@ -12,7 +13,7 @@ const AuctionCard = ({ auction, onBidSuccess }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [form] = Form.useForm();
-
+    const navigate = useNavigate();
     // Tính giá tối thiểu
     const minBidAmount = auction.currentPrice + (auction.stepPrice || 0);
 
@@ -55,8 +56,9 @@ const getStatusInfo = (status) => {
                 cover={
                     <img
                         alt="product"
-                        src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
-                        style={{ height: 200, objectFit: 'cover' }}
+                        src={auction.imageUrl || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"}
+                        style={{ height: 200, width: '100%', objectFit: 'cover', filter: !isOpen ? 'grayscale(30%)' : 'none' }}
+                        onClick={() => navigate(`/auction/${auction.id}`)}
                     />
                 }
                 actions={[
@@ -74,7 +76,8 @@ const getStatusInfo = (status) => {
                 ]}
             >
                 <Card.Meta
-                    title={<span style={{ fontSize: 18, color: '#1890ff' }}>{auction.productName}</span>}
+                    title={<span onClick={() => navigate(`/auction/${auction.id}`)}
+                        style={{ fontSize: 18, color: '#1890ff', cursor: 'pointer' }}>{auction.productName}</span>}
                     description={
                         <div>
                             <p><UserOutlined /> Người bán: <b>{auction.seller?.username}</b></p>

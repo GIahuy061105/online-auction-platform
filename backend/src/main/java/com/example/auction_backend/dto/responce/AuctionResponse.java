@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -18,11 +19,13 @@ public class AuctionResponse {
     private BigDecimal stepPrice;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private String ImageUrl;
     private String status;
 
     // Thay vì trả về User, ta trả về UserResponse gọn nhẹ
     private UserResponse seller;
     private UserResponse winner;
+    private List<BidResponse> bidHistory;
 
     // Hàm chuyển đổi từ Auction Entity sang AuctionResponse
     public static AuctionResponse fromEntity(Auction auction) {
@@ -35,9 +38,15 @@ public class AuctionResponse {
                 .stepPrice(auction.getStepPrice())
                 .startTime(auction.getStartTime())
                 .endTime(auction.getEndTime())
+                .ImageUrl(auction.getImageUrl())
                 .status(auction.getStatus().name())
                 .seller(UserResponse.fromEntity(auction.getSeller()))
                 .winner(UserResponse.fromEntity(auction.getWinner()))
+                .bidHistory(auction.getBids() != null ?
+                    auction.getBids().stream()
+                            .map(BidResponse::fromEntity)
+                            .sorted((a,b) -> b.getTime().compareTo(a.getTime()))
+                            .toList() : List.of())
                 .build();
     }
 }

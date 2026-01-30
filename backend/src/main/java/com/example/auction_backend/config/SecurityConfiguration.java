@@ -30,6 +30,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // Cho phép Login/Register
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Cho phép Swagger
+                        .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated() // Còn lại phải có Token
                 )
                 .sessionManagement(session -> session

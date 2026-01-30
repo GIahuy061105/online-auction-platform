@@ -2,6 +2,7 @@ import {BrowserRouter , Routes, Route ,Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage'
 import AuctionListPage from './pages/AuctionListPage'
 import CreateAuctionPage from './pages/CreateAuctionPage'
+import AuctionDetailsPage from './pages/AuctionDetailsPage'
 function App() {
   return (
       <BrowserRouter>
@@ -12,7 +13,9 @@ function App() {
               <Route path="/auction" element={<AuctionListPage/>} />
               {/*Route tạo buổi đấu giá */}
               <Route path="/create-auction" element={<CreateAuctionPage/>}     />
-          </Routes>
+              {/*Route xem chi tiết sản phẩm */}
+              <Route path="/auction/:id" element={<AuctionDetailsPage/>} />
+           </Routes>
       </BrowserRouter>
   );
 }

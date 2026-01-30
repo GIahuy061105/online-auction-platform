@@ -1,6 +1,7 @@
 package com.example.auction_backend.model;
 
 import com.example.auction_backend.enums.AuctionStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -37,6 +38,9 @@ public class Auction {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
+    @Column(name= "image_url")
+    private String ImageUrl;
+
     @Enumerated(EnumType.STRING)
     private AuctionStatus status; // Enum: OPEN, CLOSED, CANCELLED
 
@@ -52,5 +56,7 @@ public class Auction {
 
     // Danh sách các lượt bid của phiên này
     @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Bid> bids;
+
 }
