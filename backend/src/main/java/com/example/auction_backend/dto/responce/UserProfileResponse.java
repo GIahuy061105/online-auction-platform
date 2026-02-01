@@ -12,12 +12,18 @@ public class UserProfileResponse {
     private String username;
     private String email;
     private BigDecimal balance;
+    private String fullName;
+    private String phoneNumber;
+    private String address;
 
     public static UserProfileResponse fromEntity(User user) {
         return UserProfileResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .fullName(user.getFullName())
+                .phoneNumber(user.getPhoneNumber())
+                .address(user.getAddress())
                 .balance(user.getBalance())
                 .build();
     }

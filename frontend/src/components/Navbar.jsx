@@ -29,12 +29,13 @@ const Navbar = () => {
         getUserData();
     }, []);
 
-    const handleOpenProfile = () => {
-        if (!userProfile) {
-            getUserData();
-        }
-        setIsModalOpen(true);
-    };
+    const handleMenuClick = ({ key }) => {
+            if (key === 'profile') {
+                navigate('/profile'); // <--- Chuyển sang trang Profile thay vì mở Modal
+            } else if (key === 'logout') {
+                handleLogout();
+            }
+        };
 
     // Hàm đăng xuất
     const handleLogout = () => {
@@ -47,9 +48,9 @@ const Navbar = () => {
     const menuItems = [
         {
             key: 'profile',
-            label: 'Xem thông tin cá nhân',
+            label: 'Hồ sơ cá nhân',
             icon: <UserOutlined />,
-            onClick: handleOpenProfile,
+            onClick: () => navigate('/profile'),
         },
         {
             type: 'divider',
@@ -104,34 +105,6 @@ const Navbar = () => {
                     </Dropdown>
                 </div>
             </Header>
-
-            {/* Modal hiển thị thông tin chi tiết */}
-            <Modal
-                title="Hồ Sơ Của Tôi"
-                open={isModalOpen}
-                onCancel={() => setIsModalOpen(false)}
-                footer={[
-                    <Button key="close" onClick={() => setIsModalOpen(false)}>Đóng</Button>
-                ]}
-            >
-                {userProfile ? (
-                    <Descriptions column={1} bordered>
-                        <Descriptions.Item label={<><UserOutlined /> Tên tài khoản</>}>
-                            <b>{userProfile.username}</b>
-                        </Descriptions.Item>
-                        <Descriptions.Item label={<><MailOutlined /> Email đăng ký</>}>
-                            {userProfile.email}
-                        </Descriptions.Item>
-                        <Descriptions.Item label={<><WalletOutlined /> Số dư ví</>}>
-                            <span style={{ color: 'red', fontWeight: 'bold', fontSize: 16 }}>
-                                {formatCurrency(userProfile.balance)}
-                            </span>
-                        </Descriptions.Item>
-                    </Descriptions>
-                ) : (
-                    <p>Đang tải...</p>
-                )}
-            </Modal>
         </>
     );
 };

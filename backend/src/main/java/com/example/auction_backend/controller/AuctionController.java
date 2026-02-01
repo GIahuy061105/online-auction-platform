@@ -2,6 +2,7 @@ package com.example.auction_backend.controller;
 
 import com.example.auction_backend.dto.request.AuctionRequest;
 import com.example.auction_backend.dto.responce.AuctionResponse;
+import com.example.auction_backend.enums.AuctionStatus;
 import com.example.auction_backend.model.Auction;
 import com.example.auction_backend.repository.AuctionRepository;
 import com.example.auction_backend.service.AuctionService;
@@ -47,6 +48,12 @@ public class AuctionController {
         Auction auction = auctionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
         return ResponseEntity.ok(AuctionResponse.fromEntity(auction));
+    }
+    @GetMapping("/search")
+    public List<Auction> searchAuctions(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) AuctionStatus status) {
+        return auctionRepository.searchAuctions(keyword, status);
     }
 
 }

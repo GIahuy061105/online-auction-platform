@@ -1,62 +1,108 @@
 import { useEffect, useState } from 'react';
-import { Row, Col, Typography, Spin, Alert } from 'antd';
-import api from '../services/api';
-import AuctionCard from '../components/AuctionCard';
-import Navbar from '../components/Navbar'
+import { Row, Col, Input, Select, Spin, Empty, Typography, Card } from 'antd';
+import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import Navbar from '../components/Navbar';
+import AuctionCard from '../components/AuctionCard';
 
 const { Title } = Typography;
+const { Option } = Select;
 
 const AuctionListPage = () => {
-  const [auctions, setAuctions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+    const [auctions, setAuctions] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-  // Hàm gọi API lấy danh sách
-  const fetchAuctions = async () => {
-    try {
-      const response = await api.get('/auctions'); // Gọi API GET /auctions
-      setAuctions(response.data);
-    } catch (error) {
-      console.error("Lỗi tải danh sách:", error);
-      // Nếu lỗi 403 <Hết hạn token> -> Đá về login
-      if (error.response && error.response.status === 403) {
-          navigate('/');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    fetchAuctions();
-  }, []);
 
-  return (
-    <div style={{ padding: '30px 50px', backgroundColor: '#f0f2f5', minHeight: '100vh',paddingTop : 64 }}>
-        <Navbar />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <Title level={2} style={{ margin: 0 }}>🔥 Sàn Đấu Giá Đang Diễn Ra</Title>
-      </div>
+    const [keyword, setKeyword] = useState('');
+    const [status, setStatus] = useState(null);
 
-      {loading ? (
-        <div style={{ textAlign: 'center', marginTop: 50 }}><Spin size="large" /></div>
-      ) : (
-        <Row gutter={[24, 24]}> {/* Gutter là khoảng cách giữa các ô */}
-          {auctions.map((auction) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={auction.id}>
-              <AuctionCard auction={auction} onBidSuccess={fetchAuctions} />
-            </Col>
-          ))}
+    const navigate = useNavigate();
 
-          {auctions.length === 0 && (
-             <Col span={24}>
-                <Alert message="Chưa có phiên đấu giá nào" type="info" showIcon />
-             </Col>
-          )}
-        </Row>
-      )}
-    </div>
-  );
+    // Hàm gọi API tìm kiếm
+    const fetchAuctions = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/auctions/search', {
+                params: {
+                    keyword: keyword,
+                    status: status
+                }
+            });
+            setAuctions(response.data);
+        } catch (error) {
+            console.error("Lỗi tải danh sách:", error);
+            if (error.response && error.response.status === 403) {
+                navigate('/');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            fetchAuctions();
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [keyword, status]);
+
+    return (
+        <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', paddingTop: 80 }}>
+            <Navbar />
+
+            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px' }}>
+
+                <Card bordered={false} style={{ borderRadius: 10, marginBottom: 30, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 15 }}>
+                        <Title level={3} style={{ margin: 0 }}>🛍️ Sàn Đấu Giá</Title>
+
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            {/* Ô tìm kiếm tên */}
+                            <Input
+                                placeholder="Tìm kiếm (iPhone, Laptop...)"
+                                prefix={<SearchOutlined />}
+                                size="large"
+                                style={{ width: 250 }}
+                                onChange={(e) => setKeyword(e.target.value)}
+                                allowClear
+                            />
+
+                            {/* Ô chọn trạng thái */}
+                            <Select
+                                placeholder="Trạng thái"
+                                size="large"
+                                style={{ width: 180 }}
+                                onChange={(value) => setStatus(value)}
+                                allowClear
+                                suffixIcon={<FilterOutlined />}
+                            >
+                                <Option value="OPEN">🟢 Đang diễn ra</Option>
+                                <Option value="WAITING">🟠 Sắp diễn ra</Option>
+                                <Option value="CLOSED">🔴 Đã kết thúc</Option>
+                            </Select>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* DANH SÁCH SẢN PHẨM */}
+                {loading ? (
+                    <div style={{ textAlign: 'center', marginTop: 100 }}><Spin size="large" tip="Đang tải..." /></div>
+                ) : auctions.length > 0 ? (
+                    <Row gutter={[24, 24]}>
+                        {auctions.map(auction => (
+                            <Col xs={24} sm={12} md={8} lg={6} key={auction.id}>
+                                <AuctionCard auction={auction} onBidSuccess={fetchAuctions} />
+                            </Col>
+                        ))}
+                    </Row>
+                ) : (
+                    <Empty description="Không tìm thấy sản phẩm nào" style={{ marginTop: 100 }} />
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default AuctionListPage;

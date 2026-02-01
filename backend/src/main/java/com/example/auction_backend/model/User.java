@@ -33,6 +33,15 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column (name = "fullname")
+    private String fullName;
+
+    @Column (name = "phonenumber")
+    private String phoneNumber;
+
+    private String address;
+
+
     @Column(nullable = false)
     private BigDecimal balance;
 

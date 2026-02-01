@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage'
 import AuctionListPage from './pages/AuctionListPage'
 import CreateAuctionPage from './pages/CreateAuctionPage'
 import AuctionDetailsPage from './pages/AuctionDetailsPage'
+import ProfilePage from './pages/ProfilePage'
 function App() {
   return (
       <BrowserRouter>
@@ -15,6 +16,8 @@ function App() {
               <Route path="/create-auction" element={<CreateAuctionPage/>}     />
               {/*Route xem chi tiết sản phẩm */}
               <Route path="/auction/:id" element={<AuctionDetailsPage/>} />
+              {/*Route xem profile ng dùng */}
+              <Route path ="/profile" element={<ProfilePage/>} />
            </Routes>
       </BrowserRouter>
   );
