@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,6 +28,8 @@ public class AuctionService {
 
     public Auction createAuction(AuctionRequest request) {
         // 1. Lấy username của người đang đăng nhập từ Security Context
+        System.out.println("--- DEBUG CREATE AUCTION ---");
+        System.out.println("Ảnh nhận được: " + request.getImageUrls());
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
         // 2. Tìm User trong DB
@@ -44,10 +47,10 @@ public class AuctionService {
         auction.setEndTime(request.getEndTime());
         auction.setSeller(seller);
         LocalDateTime now = LocalDateTime.now();
-        if(request.getImageUrl() != null && !request.getImageUrl().isEmpty()){
-            auction.setImageUrl(auction.getImageUrl());
+        if(request.getImageUrls() != null && !request.getImageUrls().isEmpty()){
+            auction.setImageUrls(request.getImageUrls());
         }else{
-            auction.setImageUrl("https://via.placeholder.com/400x200?text=No+Image");
+            auction.setImageUrls(new ArrayList<>());
         }
         if(request.getStartTime().isAfter(now)){
             auction.setStatus(AuctionStatus.WAITING);

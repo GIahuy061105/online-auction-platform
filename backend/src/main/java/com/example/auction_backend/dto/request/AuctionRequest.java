@@ -3,6 +3,7 @@ package com.example.auction_backend.dto.request;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class AuctionRequest {
@@ -12,5 +13,5 @@ public class AuctionRequest {
     private BigDecimal stepPrice;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private String ImageUrl;
+    private List<String> imageUrls;
 }

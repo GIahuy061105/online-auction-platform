@@ -1,5 +1,5 @@
 import { Layout, Menu, Avatar, Dropdown, Modal, Button, Descriptions, message } from 'antd';
-import { UserOutlined, LogoutOutlined, WalletOutlined, MailOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, WalletOutlined, MailOutlined, PlusCircleOutlined , ShopOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -31,7 +31,7 @@ const Navbar = () => {
 
     const handleMenuClick = ({ key }) => {
             if (key === 'profile') {
-                navigate('/profile'); // <--- Chuyển sang trang Profile thay vì mở Modal
+                navigate('/profile');
             } else if (key === 'logout') {
                 handleLogout();
             }
@@ -53,6 +53,12 @@ const Navbar = () => {
             onClick: () => navigate('/profile'),
         },
         {
+                key: 'activity',
+                label: 'Hoạt động của tôi',
+                icon: <ShopOutlined />,
+                onClick: () => navigate('/my-activity'),
+          },
+        {
             type: 'divider',
         },
         {
@@ -67,13 +73,13 @@ const Navbar = () => {
     return (
         <>
             <Header style={{
-                position: 'fixed',   // Chốt cố định
-                zIndex: 1000,        // Luôn nổi lên trên cùng (cao hơn mọi layer khác)
-                width: '100%',       // Tràn chiều ngang màn hình
-                top: 0,              // Dính sát mép trên
+                position: 'fixed',
+                zIndex: 1000,
+                width: '100%',
+                top: 0,
                 left: 0,
-                backgroundColor: '#ffffff',  // Nền trắng nổi bật trên nền xám của web
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)', // Đổ bóng nhẹ xuống dưới để tạo hiệu ứng nổi 3D
+                backgroundColor: '#ffffff',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 borderBottom: '1px solid #e8e8e8',
                 display: 'flex',
                 alignItems: 'center',

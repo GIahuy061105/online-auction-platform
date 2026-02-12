@@ -1,7 +1,7 @@
 package com.example.auction_backend.controller;
 
 import com.example.auction_backend.dto.request.UpdateProfileRequest;
-import com.example.auction_backend.dto.responce.UserProfileResponse;
+import com.example.auction_backend.dto.response.UserProfileResponse;
 import com.example.auction_backend.model.User;
 import com.example.auction_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

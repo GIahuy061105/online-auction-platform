@@ -18,4 +18,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
             "(:status IS NULL OR a.status = :status)")
     List<Auction> searchAuctions(@Param("keyword") String keyword,
                                  @Param("status") AuctionStatus status);
+    List<Auction> findBySellerUsername(String username);
+    List<Auction> findByStatusAndWinnerUsername(AuctionStatus status , String username);
+    @Query("SELECT DISTINCT b.auction FROM Bid b WHERE b.user.username = :username")
+    List<Auction> findParticipatedAuctions(@Param("username") String username);
 }

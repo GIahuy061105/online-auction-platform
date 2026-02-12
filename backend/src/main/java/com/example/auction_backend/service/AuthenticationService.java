@@ -1,7 +1,6 @@
 package com.example.auction_backend.service; // Nhớ tạo package service
 
-import com.example.auction_backend.service.JwtService;
-import com.example.auction_backend.dto.responce.AuthResponse;
+import com.example.auction_backend.dto.response.AuthResponse;
 import com.example.auction_backend.dto.request.LoginRequest;
 import com.example.auction_backend.dto.request.RegisterRequest;
 import com.example.auction_backend.model.User;

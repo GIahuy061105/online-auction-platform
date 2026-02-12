@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -38,8 +39,10 @@ public class Auction {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
+    @ElementCollection
     @Column(name= "image_url")
-    private String ImageUrl;
+    private List<String> imageUrls = new ArrayList<>();
+
 
     @Enumerated(EnumType.STRING)
     private AuctionStatus status; // Enum: OPEN, CLOSED, CANCELLED

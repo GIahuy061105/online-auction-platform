@@ -4,6 +4,7 @@ import AuctionListPage from './pages/AuctionListPage'
 import CreateAuctionPage from './pages/CreateAuctionPage'
 import AuctionDetailsPage from './pages/AuctionDetailsPage'
 import ProfilePage from './pages/ProfilePage'
+import MyActivityPage from './pages/MyActivityPage';
 function App() {
   return (
       <BrowserRouter>
@@ -18,6 +19,8 @@ function App() {
               <Route path="/auction/:id" element={<AuctionDetailsPage/>} />
               {/*Route xem profile ng dùng */}
               <Route path ="/profile" element={<ProfilePage/>} />
+              {/*Route xem trang hoạt động */}
+              <Route path="/my-activity" element={<MyActivityPage />} />
            </Routes>
       </BrowserRouter>
   );

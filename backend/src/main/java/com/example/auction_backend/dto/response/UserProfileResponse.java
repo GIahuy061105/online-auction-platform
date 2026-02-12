@@ -1,4 +1,4 @@
-package com.example.auction_backend.dto.responce;
+package com.example.auction_backend.dto.response;
 import com.example.auction_backend.model.User;
 import lombok.Data;
 import lombok.Builder;

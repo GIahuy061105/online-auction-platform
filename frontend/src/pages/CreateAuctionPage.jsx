@@ -1,46 +1,52 @@
-import { Form, Input, InputNumber, DatePicker, Button, Card, message, Row, Col , Upload } from 'antd';
-import { RocketOutlined, PlusOutlined , LoadingOutlined } from '@ant-design/icons';
+import { Form, Input, InputNumber, DatePicker, Button, Card, message, Row, Col, Upload } from 'antd';
+import { RocketOutlined, PlusOutlined } from '@ant-design/icons';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import dayjs from 'dayjs';
 import { useState } from 'react';
+
 const { RangePicker } = DatePicker;
 
 const CreateAuctionPage = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [uploading, setUploading] = useState(false);
-    const [imageUrl, setImageUrl] = useState(null);
+    const [fileList, setFileList] = useState([]); // ✅ Dùng mảng để chứa nhiều ảnh
 
     const handleUpload = async (options) => {
-            const { file, onSuccess, onError } = options;
-            const formData = new FormData();
-            formData.append('file', file);
+        const { file, onSuccess, onError } = options;
+        const formData = new FormData();
+        formData.append('file', file);
 
-            setUploading(true);
-            try {
-                // Gọi API Upload của Backend
-                const response = await api.post('/upload', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                });
+        try {
+            const response = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            // Tạo object file chuẩn cho Antd hiển thị
+            const newFile = {
+                uid: file.uid,
+                name: file.name,
+                status: 'done',
+                url: response.data.url, // Link từ backend
+            };
 
-                // Lấy đường dẫn ảnh từ server trả về
-                const url = response.data.url;
-                console.log("Link ảnh backend trả về:", url);
-                setImageUrl(url); // Lưu vào state để tí nữa gửi đi
-                onSuccess("Ok");
-                message.success('Upload ảnh thành công!');
-            } catch (err) {
-                onError({ err });
-                message.error('Upload ảnh thất bại!');
-            } finally {
-                setUploading(false);
-            }
+            setFileList((prev) => [...prev, newFile]); // Thêm vào danh sách
+            onSuccess("Ok");
+            message.success('Upload ảnh thành công!');
+        } catch (err) {
+            onError({ err });
+            message.error('Upload thất bại!');
+        }
     };
+
+    const handleRemove = (file) => {
+        setFileList((prev) => prev.filter((item) => item.uid !== file.uid));
+    };
+
     const onFinish = async (values) => {
         setLoading(true);
         try {
+            // ✅ Lấy danh sách link ảnh từ state
+            const listUrls = fileList.map(file => file.url);
 
             const payload = {
                 productName: values.productName,
@@ -49,49 +55,53 @@ const CreateAuctionPage = () => {
                 stepPrice: values.stepPrice,
                 startTime: values.timeRange[0].format('YYYY-MM-DDTHH:mm:ss'),
                 endTime: values.timeRange[1].format('YYYY-MM-DDTHH:mm:ss'),
-                imageUrl: imageUrl
+
+                // ✅ QUAN TRỌNG: Gửi mảng urls lên Backend
+                imageUrls: listUrls
             };
+
+            console.log("Dữ liệu gửi đi:", payload); // Debug xem có ảnh chưa
 
             await api.post('/auctions/create', payload);
 
             message.success('🎉 Đăng bán thành công!');
-            navigate('/auction'); // Về trang chủ để xem hàng vừa đăng
+            navigate('/auction');
 
         } catch (error) {
+            console.error(error);
             message.error('Đăng bán thất bại! Vui lòng kiểm tra lại.');
         } finally {
             setLoading(false);
         }
     };
+
     const uploadButton = (
         <button style={{ border: 0, background: 'none' }} type="button">
-            {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+            <PlusOutlined />
            <div style={{ marginTop: 8 }}>Upload</div>
         </button>
     );
 
-
     return (
-        <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh' , paddingTop: 64 }}>
+        <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', paddingTop: 80 }}>
             <Navbar />
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 50 }}>
-                <Card title="🚀 ĐĂNG BÁN SẢN PHẨM MỚI" style={{ width: 800 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                {/* Fix warning Card bordered */}
+                <Card title="🚀 ĐĂNG BÁN SẢN PHẨM MỚI" variant="borderless" style={{ width: 800 }}>
                     <Form layout="vertical" onFinish={onFinish}>
-                        <Form.Item label="Hình ảnh sản phẩm">
+
+                        <Form.Item label="Hình ảnh sản phẩm (Tối đa 5 ảnh)">
                              <Upload
-                                      name="avatar"
-                                      listType="picture-card"
-                                      className="avatar-uploader"
-                                      showUploadList={false} // Chỉ hiện 1 ảnh đại diện
-                                      customRequest={handleUpload} // Tự xử lý upload thay vì để Antd tự làm
-                                      >
-                                     {imageUrl ? (
-                                            <img src={imageUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                     ) : (
-                                       uploadButton
-                                 )}
+                                listType="picture-card"
+                                fileList={fileList}
+                                customRequest={handleUpload}
+                                onRemove={handleRemove}
+                                multiple={true}
+                              >
+                                 {fileList.length >= 5 ? null : uploadButton}
                              </Upload>
                         </Form.Item>
+
                         <Form.Item
                             name="productName"
                             label="Tên sản phẩm"
