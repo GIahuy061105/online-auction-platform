@@ -5,12 +5,14 @@ import CreateAuctionPage from './pages/CreateAuctionPage'
 import AuctionDetailsPage from './pages/AuctionDetailsPage'
 import ProfilePage from './pages/ProfilePage'
 import MyActivityPage from './pages/MyActivityPage';
+import RegisterPage from './pages/RegisterPage';
 function App() {
   return (
       <BrowserRouter>
           <Routes>
               {/*Mặc định vào Login*/}
               <Route path="/" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage/>} />
               {/*Route cho trang đấu giá */}
               <Route path="/auction" element={<AuctionListPage/>} />
               {/*Route tạo buổi đấu giá */}

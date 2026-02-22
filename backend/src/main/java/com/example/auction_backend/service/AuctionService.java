@@ -28,7 +28,7 @@ public class AuctionService {
 
     public Auction createAuction(AuctionRequest request) {
         // 1. Lấy username của người đang đăng nhập từ Security Context
-        System.out.println("--- DEBUG CREATE AUCTION ---");
+        System.out.println("--- CREATE AUCTION ---");
         System.out.println("Ảnh nhận được: " + request.getImageUrls());
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 

@@ -33,8 +33,6 @@ public class UserController {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (request.getFullName() != null) user.setFullName(request.getFullName());
         if (request.getPhoneNumber() != null) user.setPhoneNumber(request.getPhoneNumber());
-        if (request.getAddress() != null) user.setAddress(request.getAddress());
-
         User updatedUser = userRepository.save(user);
         return ResponseEntity.ok(UserProfileResponse.fromEntity(updatedUser));
     }

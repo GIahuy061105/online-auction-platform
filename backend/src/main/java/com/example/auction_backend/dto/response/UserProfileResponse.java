@@ -14,7 +14,6 @@ public class UserProfileResponse {
     private BigDecimal balance;
     private String fullName;
     private String phoneNumber;
-    private String address;
 
     public static UserProfileResponse fromEntity(User user) {
         return UserProfileResponse.builder()
@@ -23,7 +22,6 @@ public class UserProfileResponse {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
-                .address(user.getAddress())
                 .balance(user.getBalance())
                 .build();
     }

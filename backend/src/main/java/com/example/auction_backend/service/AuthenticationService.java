@@ -26,13 +26,13 @@ public class AuthenticationService {
         var user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword())) // Mã hóa pass
-                .balance(BigDecimal.ZERO) // Mới tạo thì tiền là 0
+                .password(passwordEncoder.encode(request.getPassword()))
+                .balance(BigDecimal.ZERO)
                 .build();
 
-        repository.save(user); // Lưu vào DB
+        repository.save(user);
 
-        var jwtToken = jwtService.generateToken(user); // Tạo token
+        var jwtToken = jwtService.generateToken(user);
         return AuthResponse.builder()
                 .token(jwtToken)
                 .username(user.getUsername())
@@ -41,15 +41,12 @@ public class AuthenticationService {
 
     // 2. Xử lý Đăng nhập
     public AuthResponse authenticate(LoginRequest request) {
-        // Hàm này sẽ tự check user/pass, nếu sai nó tự ném lỗi
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
                         request.getPassword()
                 )
         );
-
-        // Nếu chạy đến đây nghĩa là đăng nhập đúng -> Tạo token trả về
         var user = repository.findByUsername(request.getUsername())
                 .orElseThrow();
         var jwtToken = jwtService.generateToken(user);

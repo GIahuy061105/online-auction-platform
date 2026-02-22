@@ -22,8 +22,7 @@ public class AuctionScheduler {
     public void updateAuctionStatus() {
         LocalDateTime now = LocalDateTime.now();
 
-        // --- NHIỆM VỤ 1: MỞ PHIÊN ĐẤU GIÁ (WAITING -> OPEN) ---
-        // Tìm những phiên đang WAITING mà giờ bắt đầu <= giờ hiện tại
+        // ---  1: MỞ PHIÊN ĐẤU GIÁ (WAITING -> OPEN) ---
         List<Auction> startingAuctions = auctionRepository.findByStatusAndStartTimeBefore(
                 AuctionStatus.WAITING,
                 now
@@ -36,8 +35,7 @@ public class AuctionScheduler {
             auctionRepository.saveAll(startingAuctions);
         }
 
-        // --- NHIỆM VỤ 2: ĐÓNG PHIÊN ĐẤU GIÁ (OPEN -> CLOSED) ---
-        // Tìm những phiên đang OPEN mà giờ kết thúc <= giờ hiện tại
+        // ---  2: ĐÓNG PHIÊN ĐẤU GIÁ (OPEN -> CLOSED) ---
         List<Auction> expiredAuctions = auctionRepository.findByStatusAndEndTimeBefore(
                 AuctionStatus.OPEN,
                 now

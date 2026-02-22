@@ -1,7 +1,8 @@
 import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import api from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate , Link } from 'react-router-dom';
+
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -55,6 +56,10 @@ const LoginPage = () => {
             <Button type="primary" htmlType="submit" block size="large">
               Đăng Nhập
             </Button>
+            <div style={{ textAlign: 'center', marginTop: 15 }}>
+                <span>Chưa có tài khoản? </span>
+                <Link to="/register" style={{ fontWeight: 'bold' }}>Đăng ký ngay</Link>
+            </div>
           </Form.Item>
         </Form>
       </Card>

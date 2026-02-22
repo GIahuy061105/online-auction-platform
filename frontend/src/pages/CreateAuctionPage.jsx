@@ -10,26 +10,25 @@ const { RangePicker } = DatePicker;
 const CreateAuctionPage = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [fileList, setFileList] = useState([]); // ✅ Dùng mảng để chứa nhiều ảnh
+    const [fileList, setFileList] = useState([]);
 
     const handleUpload = async (options) => {
         const { file, onSuccess, onError } = options;
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('files', file);
 
         try {
-            const response = await api.post('/upload', formData, {
+            const response = await api.post('/files/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            // Tạo object file chuẩn cho Antd hiển thị
             const newFile = {
                 uid: file.uid,
                 name: file.name,
                 status: 'done',
-                url: response.data.url, // Link từ backend
+                url: response.data[0],
             };
 
-            setFileList((prev) => [...prev, newFile]); // Thêm vào danh sách
+            setFileList((prev) => [...prev, newFile]);
             onSuccess("Ok");
             message.success('Upload ảnh thành công!');
         } catch (err) {
@@ -45,7 +44,6 @@ const CreateAuctionPage = () => {
     const onFinish = async (values) => {
         setLoading(true);
         try {
-            // ✅ Lấy danh sách link ảnh từ state
             const listUrls = fileList.map(file => file.url);
 
             const payload = {
@@ -55,13 +53,8 @@ const CreateAuctionPage = () => {
                 stepPrice: values.stepPrice,
                 startTime: values.timeRange[0].format('YYYY-MM-DDTHH:mm:ss'),
                 endTime: values.timeRange[1].format('YYYY-MM-DDTHH:mm:ss'),
-
-                // ✅ QUAN TRỌNG: Gửi mảng urls lên Backend
                 imageUrls: listUrls
             };
-
-            console.log("Dữ liệu gửi đi:", payload); // Debug xem có ảnh chưa
-
             await api.post('/auctions/create', payload);
 
             message.success('🎉 Đăng bán thành công!');
@@ -85,20 +78,46 @@ const CreateAuctionPage = () => {
     return (
         <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', paddingTop: 80 }}>
             <Navbar />
+            <style>
+                            {`
+                                /* Ép danh sách ảnh của Ant Design hiển thị nằm ngang và cuộn được */
+                                .horizontal-upload-list .ant-upload-list {
+                                    display: flex !important;
+                                    flex-wrap: nowrap !important;
+                                    overflow-x: auto !important;
+                                    padding-bottom: 10px;
+                                }
+                                /* Giữ kích thước cố định cho mỗi ảnh, không bị bóp méo */
+                                .horizontal-upload-list .ant-upload-list-item-container {
+                                    flex: 0 0 auto !important;
+                                    margin-right: 12px;
+                                }
+                                /* Làm đẹp thanh cuộn */
+                                .horizontal-upload-list .ant-upload-list::-webkit-scrollbar {
+                                    height: 6px;
+                                }
+                                .horizontal-upload-list .ant-upload-list::-webkit-scrollbar-thumb {
+                                    background-color: #d9d9d9;
+                                    border-radius: 4px;
+                                }
+                            `}
+                        </style>
             <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
                 {/* Fix warning Card bordered */}
                 <Card title="🚀 ĐĂNG BÁN SẢN PHẨM MỚI" variant="borderless" style={{ width: 800 }}>
                     <Form layout="vertical" onFinish={onFinish}>
 
-                        <Form.Item label="Hình ảnh sản phẩm (Tối đa 5 ảnh)">
+                        <Form.Item label="Hình ảnh sản phẩm">
                              <Upload
                                 listType="picture-card"
                                 fileList={fileList}
                                 customRequest={handleUpload}
                                 onRemove={handleRemove}
                                 multiple={true}
+                                accept="image/*,video/*"
+                                className="horizontal-upload-list"
                               >
-                                 {fileList.length >= 5 ? null : uploadButton}
+                                 {uploadButton}
                              </Upload>
                         </Form.Item>
 

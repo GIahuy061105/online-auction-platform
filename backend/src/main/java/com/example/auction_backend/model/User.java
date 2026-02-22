@@ -39,9 +39,6 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
     @Column (name = "phonenumber")
     private String phoneNumber;
 
-    private String address;
-
-
     @Column(nullable = false)
     private BigDecimal balance;
 
