@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import AuctionCard from '../components/AuctionCard';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
+import { message } from 'antd';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -39,14 +42,34 @@ const AuctionListPage = () => {
             setLoading(false);
         }
     };
+    useEffect(() => {
+        fetchAuctions();
+    }, [keyword, status]);
 
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            fetchAuctions();
-        }, 500);
+        fetchAuctions();
 
-        return () => clearTimeout(timeoutId);
-    }, [keyword, status]);
+        const stompClient =  new Client({
+            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            onConnect: () =>{
+                console.log("🟢 [List Page] Đã kết nối WebSocket!");
+                stompClient.subscribe('/topic/auctions/',(msg) => {
+                    const newAuctionData = JSON.parse(msg.body);
+                    setAuctions((prevAuctions) => {
+                        return [newAuctionData, ...prevAuctions];
+                        });
+                    message.info(`🎉 Vừa có sản phẩm mới: ${newAuctionData.productName}`);
+                });
+            }
+        });
+        stompClient.activate();
+
+        return () => {
+            if(stompClient.active){
+                stompClient.deactivate();
+            }
+        };
+    }, []);
 
     return (
         <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', paddingTop: 80 }}>

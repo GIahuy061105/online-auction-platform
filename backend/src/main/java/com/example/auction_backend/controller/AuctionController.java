@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.math.BigDecimal;
 import java.util.List;
-
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 @RestController
 @RequestMapping("/api/auctions")
 @RequiredArgsConstructor
 public class AuctionController {
-
+    private final SimpMessagingTemplate messagingTemplate;
     private final AuctionService auctionService;
     private final AuctionRepository auctionRepository;
 
@@ -25,17 +25,21 @@ public class AuctionController {
     @PostMapping("/create")
     public ResponseEntity<AuctionResponse> createAuction(@RequestBody AuctionRequest request) {
         Auction newAuction = auctionService.createAuction(request);
-        return ResponseEntity.ok(AuctionResponse.fromEntity(newAuction));
+        AuctionResponse responsePayload = AuctionResponse.fromEntity(newAuction);
+        messagingTemplate.convertAndSend("/topic/auctions/", responsePayload);
+        return ResponseEntity.ok(responsePayload);
     }
 
     // API đấu giá
     @PostMapping("/{id}/bid")
-    public ResponseEntity<AuctionResponse> placeBid( // ✅ Sửa thành AuctionResponse cho đồng bộ
+    public ResponseEntity<AuctionResponse> placeBid(
                                                      @PathVariable Long id,
                                                      @RequestParam BigDecimal amount
     ) {
         Auction updatedAuction = auctionService.placeBid(id, amount);
-        return ResponseEntity.ok(AuctionResponse.fromEntity(updatedAuction));
+        AuctionResponse responsePayload = AuctionResponse.fromEntity(updatedAuction);
+        messagingTemplate.convertAndSend("/topic/auction/" + id, responsePayload);
+        return ResponseEntity.ok(responsePayload);
     }
 
     // Lấy toàn bộ phiên đấu giá

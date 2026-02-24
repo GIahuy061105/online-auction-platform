@@ -4,7 +4,8 @@ import { Row, Col, Card, Typography, Statistic, Tag, Button, InputNumber, Table,
 import { RiseOutlined, ArrowLeftOutlined, UserOutlined ,LeftOutlined, RightOutlined} from '@ant-design/icons';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 const { Title, Paragraph } = Typography;
 
 const formatCurrency = (amount) => {
@@ -63,10 +64,28 @@ const AuctionDetailPage = () => {
 
     useEffect(() => {
         fetchAuctionDetail();
-        // Giữ polling tạm thời, sau này nâng cấp WebSocket ta sẽ bỏ dòng này
-        const interval = setInterval(fetchAuctionDetail, 5000);
-        return () => clearInterval(interval);
-    }, [id]);
+        const stompClient = new Client({
+            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            onConnect: () => {
+                console.log("🟢 Đã kết nối WebSocket!");
+                stompClient.subscribe(`/topic/auction/${id}` , (message) =>{
+                    const updateAuctionData = JSON.parse(message.body);
+                    setAuction(updateAuctionData);
+                    });
+                },
+            onStompError: (frame)=>{
+                console.error("🔴 Lỗi Stomp:", frame.headers['message']);
+                console.error("Chi tiết:" , frame.body);
+                }
+            });
+        stompClient.activate();
+        return () => {
+            if(stompClient.active){
+                stompClient.deactivate();
+                console.log("⚪ Đã ngắt WebSocket!");
+                }
+            };
+        },[id]);
 
     const handleBid = async (values) => {
         setBidding(true);
