@@ -9,10 +9,7 @@ import com.example.auction_backend.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -52,11 +49,41 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message","Đăng ký thành công!"));
     }
 
-    // API Đăng nhập: POST http://localhost:8080/api/auth/login
+    // API Đăng nhập
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> authenticate(
             @RequestBody LoginRequest request
     ) {
         return ResponseEntity.ok(service.authenticate(request));
+    }
+    // Gửi mã OTP về email
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+        try {
+            service.forgotPassword(email);
+            return ResponseEntity.ok(Map.of("message", "Mã OTP 6 số đã được gửi đến email của bạn."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    //  Xác nhận mã OTP và đổi mật khẩu mới
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestParam String email,
+            @RequestParam String otp,
+            @RequestParam String newPassword) {
+
+        String passwordRegex = "^(?=.*[A-Z])(?=.*\\d).{8,}$";
+        if (!newPassword.matches(passwordRegex)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Mật khẩu phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 chữ số!"));
+        }
+
+        try {
+            service.resetPassword(email, otp, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 }

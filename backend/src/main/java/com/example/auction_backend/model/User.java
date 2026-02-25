@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -49,6 +50,13 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
     @JsonIgnore
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL)
     private List<Auction> auctions;
+
+    //--- Cho việc lấy lại mật khẩu
+    @Column(name = "reset_otp", length = 6)
+    private String resetOtp;
+
+    @Column(name = "otp_expiry_time")
+    private LocalDateTime otpExpiryTime;
 
     // --- CÁC HÀM CỦA SPRING SECURITY (UserDetails) ---
 
