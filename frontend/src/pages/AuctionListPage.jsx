@@ -24,31 +24,32 @@ const AuctionListPage = () => {
 
     // Hàm gọi API tìm kiếm
     const fetchAuctions = async () => {
-        setLoading(true);
-        try {
-            const response = await api.get('/auctions/search', {
-                params: {
-                    keyword: keyword,
-                    status: status
+            setLoading(true);
+            try {
+                let url = '/auctions';
+                let params = {};
+
+                if (keyword || status) {
+                    url = '/auctions/search';
+                    params = { keyword: keyword, status: status };
                 }
-            });
-            setAuctions(response.data);
-        } catch (error) {
-            console.error("Lỗi tải danh sách:", error);
-            if (error.response && error.response.status === 403) {
-                navigate('/');
+
+                const response = await api.get(url, { params });
+                setAuctions(response.data);
+            } catch (error) {
+                console.error("Lỗi tải danh sách:", error);
+                if (error.response && error.response.status === 403) {
+                    navigate('/');
+                }
+            } finally {
+                setLoading(false);
             }
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
     useEffect(() => {
         fetchAuctions();
     }, [keyword, status]);
 
     useEffect(() => {
-        fetchAuctions();
-
         const stompClient =  new Client({
             webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
             onConnect: () =>{
@@ -56,9 +57,15 @@ const AuctionListPage = () => {
                 stompClient.subscribe('/topic/auctions/',(msg) => {
                     const newAuctionData = JSON.parse(msg.body);
                     setAuctions((prevAuctions) => {
+                        const exists = prevAuctions.find(a => a.id === newAuctionData.id);
+                        if (exists) {
+                            return prevAuctions.map(a => a.id === newAuctionData.id ? newAuctionData : a);
+                        }
                         return [newAuctionData, ...prevAuctions];
-                        });
-                    message.info(`🎉 Vừa có sản phẩm mới: ${newAuctionData.productName}`);
+                    });
+                    if(newAuctionData.status !== 'CLOSED') {
+                        message.info(`🎉 Vừa có sản phẩm mới: ${newAuctionData.productName}`);
+                    }
                 });
             }
         });

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Row, Col, Card, Typography, Statistic, Tag, Button, InputNumber, Table, message, Spin, Form, Image } from 'antd';
-import { RiseOutlined, ArrowLeftOutlined, UserOutlined ,LeftOutlined, RightOutlined} from '@ant-design/icons';
+import { Row, Col, Card, Typography, Statistic, Tag, Button, InputNumber, Table, message, Spin, Form, Image , Space } from 'antd';
+import { RiseOutlined, ArrowLeftOutlined, UserOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+const { Countdown } = Statistic;
 const { Title, Paragraph } = Typography;
 
 const formatCurrency = (amount) => {
@@ -18,41 +19,43 @@ const AuctionDetailPage = () => {
     const [auction, setAuction] = useState(null);
     const [loading, setLoading] = useState(true);
     const [bidding, setBidding] = useState(false);
-
-    // ✅ State mới: Quản lý ảnh/video đang được chiếu to
+    const [loadingBuyNow, setLoadingBuyNow] = useState(false);
     const [selectedMedia, setSelectedMedia] = useState(null);
-
-    // ✅ Hàm kiểm tra đuôi file xem có phải video không
+    const deadline = auction ? new Date(auction.endTime).getTime() : 0;
     const isVideo = (url) => {
         return url && url.match(/\.(mp4|webm|ogg|mov)$/i);
     };
+
     const currentIndex = auction?.imageUrls ? auction.imageUrls.indexOf(selectedMedia) : 0;
+
     useEffect(() => {
-            const activeThumb = document.getElementById(`thumb-${currentIndex}`);
-            if (activeThumb) {
-                activeThumb.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'nearest',
-                    inline: 'center'
-                });
-            }}, [currentIndex])
+        const activeThumb = document.getElementById(`thumb-${currentIndex}`);
+        if (activeThumb) {
+            activeThumb.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            });
+        }
+    }, [currentIndex]);
+
     const handlePrevMedia = () => {
-            if (!auction?.imageUrls || auction.imageUrls.length <= 1) return;
-            const newIndex = currentIndex === 0 ? auction.imageUrls.length - 1 : currentIndex - 1;
-            setSelectedMedia(auction.imageUrls[newIndex]);
-        };
+        if (!auction?.imageUrls || auction.imageUrls.length <= 1) return;
+        const newIndex = currentIndex === 0 ? auction.imageUrls.length - 1 : currentIndex - 1;
+        setSelectedMedia(auction.imageUrls[newIndex]);
+    };
+
     const handleNextMedia = () => {
-            if (!auction?.imageUrls || auction.imageUrls.length <= 1) return;
-            const newIndex = currentIndex === auction.imageUrls.length - 1 ? 0 : currentIndex + 1;
-            setSelectedMedia(auction.imageUrls[newIndex]);
-        };
+        if (!auction?.imageUrls || auction.imageUrls.length <= 1) return;
+        const newIndex = currentIndex === auction.imageUrls.length - 1 ? 0 : currentIndex + 1;
+        setSelectedMedia(auction.imageUrls[newIndex]);
+    };
+
     const fetchAuctionDetail = async () => {
         try {
             const response = await api.get(`/auctions/${id}`);
             const data = response.data;
             setAuction(data);
-
-            // Chỉ set ảnh mặc định ban đầu 1 lần duy nhất, tránh bị reset khi setInterval gọi lại
             setSelectedMedia((prev) => prev || (data.imageUrls?.length > 0 ? data.imageUrls[0] : null));
         } catch (error) {
             message.error("Không tìm thấy sản phẩm!");
@@ -62,30 +65,43 @@ const AuctionDetailPage = () => {
         }
     };
 
+    // Hàm xử lý mua đứt
+    const handleBuyNow = async () => {
+        setLoadingBuyNow(true);
+        try {
+            await api.post(`/auctions/${id}/buy-now`);
+            message.success('🎉 Bạn đã mua đứt sản phẩm thành công!');
+        } catch (error) {
+            message.error(error.response?.data?.message || 'Không thể mua đứt sản phẩm này!');
+        } finally {
+            setLoadingBuyNow(false);
+        }
+    };
+
     useEffect(() => {
         fetchAuctionDetail();
         const stompClient = new Client({
             webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
             onConnect: () => {
                 console.log("🟢 Đã kết nối WebSocket!");
-                stompClient.subscribe(`/topic/auction/${id}` , (message) =>{
+                stompClient.subscribe(`/topic/auction/${id}`, (message) => {
                     const updateAuctionData = JSON.parse(message.body);
                     setAuction(updateAuctionData);
-                    });
-                },
-            onStompError: (frame)=>{
+                });
+            },
+            onStompError: (frame) => {
                 console.error("🔴 Lỗi Stomp:", frame.headers['message']);
-                console.error("Chi tiết:" , frame.body);
-                }
-            });
+                console.error("Chi tiết:", frame.body);
+            }
+        });
         stompClient.activate();
         return () => {
-            if(stompClient.active){
+            if (stompClient.active) {
                 stompClient.deactivate();
                 console.log("⚪ Đã ngắt WebSocket!");
-                }
-            };
-        },[id]);
+            }
+        };
+    }, [id]);
 
     const handleBid = async (values) => {
         setBidding(true);
@@ -122,8 +138,6 @@ const AuctionDetailPage = () => {
     return (
         <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', paddingTop: 80, paddingBottom: 40 }}>
             <Navbar />
-
-            {/* ✅ INJECT CSS CHO THANH TRƯỢT */}
             <style>
                 {`
                     .thumbnail-container {
@@ -150,8 +164,6 @@ const AuctionDetailPage = () => {
                 <Row gutter={[32, 32]}>
                     <Col xs={24} md={14}>
                         <Card variant="borderless" style={{ borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-
-                            {/* ✅ 1. KHU VỰC HIỂN THỊ ẢNH/VIDEO CHÍNH (TO) */}
                             <div style={{
                                 width: '100%',
                                 height: '400px',
@@ -164,38 +176,18 @@ const AuctionDetailPage = () => {
                                 position: 'relative'
                             }}>
                                 {isVideo(selectedMedia) ? (
-                                    <video
-                                        src={selectedMedia}
-                                        controls
-                                        autoPlay
-                                        style={{ maxWidth: '100%', maxHeight: '100%' }}
-                                    />
+                                    <video src={selectedMedia} controls autoPlay style={{ maxWidth: '100%', maxHeight: '100%' }} />
                                 ) : (
-                                    // Dùng Image của Ant Design để có tính năng bấm vào xem full màn hình
-                                    <Image
-                                        src={selectedMedia || "https://via.placeholder.com/500"}
-                                        style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }}
-                                    />
+                                    <Image src={selectedMedia || "https://via.placeholder.com/500"} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }} />
                                 )}
-                            {auction?.imageUrls && auction.imageUrls.length > 1 && (
-                                <Button
-                                    shape="circle"
-                                    icon={<LeftOutlined />}
-                                    onClick={handlePrevMedia}
-                                    style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', opacity: 0.7 }}
-                                />
-                            )}
-                            {auction?.imageUrls && auction.imageUrls.length > 1 && (
-                                <Button
-                                    shape="circle"
-                                    icon={<RightOutlined />}
-                                    onClick={handleNextMedia}
-                                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', opacity: 0.7 }}
-                                />
-                            )}
+                                {auction?.imageUrls && auction.imageUrls.length > 1 && (
+                                    <>
+                                        <Button shape="circle" icon={<LeftOutlined />} onClick={handlePrevMedia} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', opacity: 0.7 }} />
+                                        <Button shape="circle" icon={<RightOutlined />} onClick={handleNextMedia} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', opacity: 0.7 }} />
+                                    </>
+                                )}
                             </div>
 
-                            {/* ✅ 2. THANH TRƯỢT NGANG (ẢNH NHỎ) */}
                             {auction?.imageUrls && auction.imageUrls.length > 1 && (
                                 <div className="thumbnail-container">
                                     {auction.imageUrls.map((url, index) => (
@@ -215,11 +207,7 @@ const AuctionDetailPage = () => {
                                                 transition: 'all 0.3s'
                                             }}
                                         >
-                                            {isVideo(url) ? (
-                                                <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            ) : (
-                                                <img src={url} alt={`thumb-${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            )}
+                                            {isVideo(url) ? <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <img src={url} alt={`thumb-${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                                         </div>
                                     ))}
                                 </div>
@@ -240,42 +228,93 @@ const AuctionDetailPage = () => {
                                 {auction.status === 'OPEN' ? 'ĐANG MỞ ĐẤU GIÁ' : auction.status}
                             </Tag>
 
+
                             <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, marginBottom: 20, border: '1px solid #f0f0f0' }}>
+                                    {auction && isOpen && (
+                                        <div style={{
+                                            marginBottom: 20,
+                                            paddingBottom: 15,
+                                            borderBottom: '1px dashed #d9d9d9',
+                                            textAlign: 'center'
+                                        }}>
+                                            <Statistic.Timer
+                                                type="countdown"
+                                                title={<span style={{ fontWeight: 'bold', color: '#555' }}>⌛ THỜI GIAN CÒN LẠI</span>}
+                                                value={new Date(auction.endTime).getTime()}
+                                                format="D [Ngày] HH:mm:ss"
+                                                styles={{ content: { color: '#cf1322', fontWeight: 'bold', fontSize: 28 } }}
+                                                onFinish={fetchAuctionDetail}
+                                            />
+                                        </div>
+                                    )}
                                 <Statistic
                                     title={<span style={{ fontWeight: 'bold' }}>Giá hiện tại</span>}
                                     value={auction.currentPrice}
                                     formatter={val => <span style={{ color: '#cf1322', fontSize: 32, fontWeight: 'bold' }}>{formatCurrency(val)}</span>}
                                 />
+
                                 <div style={{ marginTop: 15, fontSize: 16 }}>
-                                    Người giữ giá cao nhất: <UserOutlined style={{ color: '#1890ff' }}/> <b style={{ color: '#1890ff' }}>{auction.winner?.username || 'Chưa có ai'}</b>
+                                    Người giữ giá cao nhất: <UserOutlined style={{ color: '#1890ff' }} /> <b style={{ color: '#1890ff' }}>{auction.winner?.username || 'Chưa có ai'}</b>
                                 </div>
                             </div>
-
                             {isOpen && (
-                                <Form layout="vertical" onFinish={handleBid} initialValues={{ amount: minBid }}>
-                                    <Form.Item
-                                        name="amount"
-                                        label={<span style={{ fontWeight: 'bold' }}>Mức giá đặt (Tối thiểu: {formatCurrency(minBid)})</span>}
-                                        rules={[
-                                            { required: true, message: 'Vui lòng nhập số tiền!' },
-                                            { type: 'number', min: minBid, message: 'Phải cao hơn giá hiện tại + bước giá!' }
-                                        ]}
-                                    >
-                                        <InputNumber
-                                            style={{ width: '100%' }}
-                                            size="large"
-                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                            parser={value => value?.replace(/\$\s?|(,*)/g, '')}
-                                            addonAfter="₫"
-                                        />
-                                    </Form.Item>
+                                <>
+                                    <Form layout="vertical" onFinish={handleBid} initialValues={{ amount: minBid }}>
+                                        <Form.Item
+                                            name="amount"
+                                            label={<span style={{ fontWeight: 'bold' }}>Mức giá đặt (Tối thiểu: {formatCurrency(minBid)})</span>}
+                                            rules={[
+                                                { required: true, message: 'Vui lòng nhập số tiền!' },
+                                                { type: 'number', min: minBid, message: 'Phải cao hơn giá hiện tại + bước giá!' }
+                                            ]}
+                                        >
+                                            <Space.Compact style={{ width: '100%' }}>
+                                                    <InputNumber
+                                                        style={{ width: '100%' }}
+                                                        size="large"
+                                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                                        parser={value => value?.replace(/\$\s?|(,*)/g, '')}
+                                                    />
+                                                    <Button size="large" disabled style={{ backgroundColor: '#fafafa', color: '#000' }}>₫</Button>
+                                                </Space.Compact>
+                                        </Form.Item>
 
-                                    <Form.Item style={{ marginBottom: 0 }}>
-                                        <Button type="primary" htmlType="submit" size="large" block loading={bidding} icon={<RiseOutlined />}>
-                                            ĐẶT GIÁ NGAY
-                                        </Button>
-                                    </Form.Item>
-                                </Form>
+                                        <Form.Item style={{ marginBottom: 0 }}>
+                                            <Button type="primary" htmlType="submit" size="large" block loading={bidding} icon={<RiseOutlined />}>
+                                                ĐẶT GIÁ NGAY
+                                            </Button>
+                                        </Form.Item>
+                                    </Form>
+
+                                    {/* HIỂN THỊ NÚT MUA ĐỨT */}
+                                    {auction.buyNowPrice && (
+                                        <div style={{
+                                            marginTop: 20,
+                                            padding: '15px',
+                                            backgroundColor: '#fffbe6',
+                                            border: '1px solid #ffe58f',
+                                            borderRadius: 8,
+                                            textAlign: 'center'
+                                        }}>
+                                            <div style={{ marginBottom: 10, fontSize: 16 }}>
+                                                Hoặc mua ngay với giá:
+                                                <span style={{ color: '#faad14', fontWeight: 'bold', fontSize: 22, marginLeft: 8 }}>
+                                                    {formatCurrency(auction.buyNowPrice)}
+                                                </span>
+                                            </div>
+                                            <Button
+                                                type="primary"
+                                                style={{ backgroundColor: '#faad14', borderColor: '#faad14' }}
+                                                size="large"
+                                                block
+                                                loading={loadingBuyNow}
+                                                onClick={handleBuyNow}
+                                            >
+                                                ⚡ MUA ĐỨT NGAY
+                                            </Button>
+                                        </div>
+                                    )}
+                                </>
                             )}
 
                             <div style={{ marginTop: 40 }}>

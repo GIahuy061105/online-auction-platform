@@ -51,6 +51,7 @@ const CreateAuctionPage = () => {
                 description: values.description,
                 startingPrice: values.startingPrice,
                 stepPrice: values.stepPrice,
+                buyNowPrice: values.buyNowPrice || null,
                 startTime: values.timeRange[0].format('YYYY-MM-DDTHH:mm:ss'),
                 endTime: values.timeRange[1].format('YYYY-MM-DDTHH:mm:ss'),
                 imageUrls: listUrls
@@ -107,7 +108,11 @@ const CreateAuctionPage = () => {
                 <Card title="🚀 ĐĂNG BÁN SẢN PHẨM MỚI" variant="borderless" style={{ width: 800 }}>
                     <Form layout="vertical" onFinish={onFinish}>
 
-                        <Form.Item label="Hình ảnh sản phẩm">
+                        <Form.Item
+                            name = "imageUrls"
+                            label="Hình ảnh sản phẩm"
+                            rules={[{ required: true, message: 'Vui lòng cho ít nhất 1 ảnh của sản phẩm' }]}
+                        >
                              <Upload
                                 listType="picture-card"
                                 fileList={fileList}
@@ -169,6 +174,32 @@ const CreateAuctionPage = () => {
                                 </Form.Item>
                             </Col>
                         </Row>
+                        <Form.Item
+                            name="buyNowPrice"
+                            label="Giá mua đứt (Không bắt buộc)"
+                            dependencies={['startingPrice']}
+                            rules={[
+                                    ({ getFieldValue }) => ({
+                                        validator(_, value) {
+                                            if (!value) {
+                                                return Promise.resolve();
+                                            }
+                                            if (value <= getFieldValue('startingPrice')) {
+                                                return Promise.reject(new Error('Giá mua đứt phải lớn hơn giá khởi điểm!'));
+                                            }
+                                            return Promise.resolve();
+                                        },
+                                    }),
+                                ]}
+                        >
+                            <InputNumber
+                                style={{ width: '100%' }}
+                                size="large"
+                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                parser={(value) => value?.replace(/\$\s?|(,*)/g, '')}
+                                addonAfter="₫"
+                                />
+                         </Form.Item>
 
                         <Form.Item
                             name="timeRange"

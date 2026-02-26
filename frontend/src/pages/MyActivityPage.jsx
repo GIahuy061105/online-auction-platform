@@ -115,7 +115,7 @@ const MyActivityPage = () => {
     const tabItems = [
         {
             key: 'owner',
-            label: <span><ShopOutlined /> Tài sản của tôi</span>,
+            label: <span><ShopOutlined /> Bài đăng của tôi</span>,
             children: <Table dataSource={data} columns={columns} rowKey="id" loading={loading} pagination={{ pageSize: 5 }} />
         },
         {

@@ -1,9 +1,8 @@
-import { Card, Button, Statistic, Tag, Modal, InputNumber, message, Form } from 'antd';
+import { Card, Button, Statistic, Tag, Modal, InputNumber, message, Form ,Badge , Space} from 'antd';
 import { ClockCircleOutlined, UserOutlined, RiseOutlined , StopOutlined, HourglassOutlined} from '@ant-design/icons';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-
 // Hàm format tiền Việt Nam
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -16,7 +15,7 @@ const AuctionCard = ({ auction, onBidSuccess }) => {
     const navigate = useNavigate();
     // Tính giá tối thiểu
     const minBidAmount = auction.currentPrice + (auction.stepPrice || 0);
-
+    const deadline = new Date(auction.endTime).getTime()
     const handleBid = async (values) => {
         setConfirmLoading(true);
         try {
@@ -87,6 +86,23 @@ const getStatusInfo = (status) => {
                                     value={auction.currentPrice}
                                     formatter={(value) => <span style={{ color: '#cf1322', fontWeight: 'bold' }}>{formatCurrency(value)}</span>}
                                 />
+                                {/* --- VỊ TRÍ ĐỒNG HỒ ĐẾM NGƯỢC --- */}
+                                   {isOpen ? (
+                                       <div style={{ marginTop: 8, borderTop: '1px solid #f0f0f0', paddingTop: 8 }}>
+                                            <Statistic.Timer
+                                                type="countdown"
+                                                title={<span style={{ fontSize: '12px' }}>⏳ Thời gian còn lại</span>}
+                                                value={deadline}
+                                                format="D [ngày] HH:mm:ss"
+                                                styles={{ content: { fontSize: '16px', color: '#d4380d', fontWeight: 'bold' } }}
+                                                onFinish={onBidSuccess}
+                                            />
+                                       </div>
+                                           ) : auction.status === 'WAITING' ? (
+                                               <div style={{ marginTop: 8, color: '#1890ff', fontSize: '12px' }}>
+                                                   <HourglassOutlined /> Mở bán: {new Date(auction.startTime).toLocaleString('vi-VN')}
+                                               </div>
+                                           ) : null}
                                 {auction.winner && (
                                     <div style={{ fontSize: 12, color: '#cf1322' }}>
                                         Người giữ giá : <b>{auction.winner.username}</b>
@@ -135,13 +151,15 @@ const getStatusInfo = (status) => {
                             }
                         ]}
                     >
-                        <InputNumber
+                        <Space.Compact style={{ width: '100%' }} >
+                            <InputNumber
                             style={{ width: '100%' }}
                             size="large"
                             formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                             parser={(value) => value?.replace(/\$\s?|(,*)/g, '')}
-                            addonAfter="₫"
                         />
+                            <Button size="large" disabled style={{ backgroundColor: '#fafafa', color: '#000' }}>₫</Button>
+                        </Space.Compact>
                     </Form.Item>
                     <div style={{ color: 'gray', fontSize: 12 }}>
                         *Lưu ý: Nếu thắng, số tiền này sẽ bị trừ khỏi ví của bạn. Nếu có người trả cao hơn sau đó, bạn sẽ được hoàn tiền.

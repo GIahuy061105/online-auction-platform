@@ -22,6 +22,7 @@ public class AuctionResponse {
     private String imageUrl;
     private String status;
     private List<String> imageUrls;
+    private BigDecimal buyNowPrice;
     // Thay vì trả về User, ta trả về UserResponse gọn nhẹ
     private UserResponse seller;
     private UserResponse winner;
@@ -45,6 +46,7 @@ public class AuctionResponse {
                 .imageUrl(thumbnail) // Map ảnh đầu tiên vào đây
                 .imageUrls(auction.getImageUrls())
                 .status(auction.getStatus().name())
+                .buyNowPrice(auction.getBuyNowPrice())
                 .seller(UserResponse.fromEntity(auction.getSeller()))
                 .winner(auction.getWinner() != null ? UserResponse.fromEntity(auction.getWinner()) : null)
                 .bidHistory(auction.getBids() != null ?

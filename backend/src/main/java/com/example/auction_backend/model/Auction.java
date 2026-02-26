@@ -61,5 +61,7 @@ public class Auction {
     @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Bid> bids;
-
+    // Giá mua đứt
+    @Column(name ="buy_now_price")
+    private BigDecimal buyNowPrice;
 }

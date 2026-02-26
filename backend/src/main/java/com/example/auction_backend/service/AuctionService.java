@@ -26,11 +26,10 @@ public class AuctionService {
     private final UserRepository userRepository;
     private final BidRepository bidRepository;
 
-    public Auction createAuction(AuctionRequest request) {
+    public Auction createAuction(AuctionRequest request , String username) {
         // 1. Lấy username của người đang đăng nhập từ Security Context
         System.out.println("--- CREATE AUCTION ---");
         System.out.println("Ảnh nhận được: " + request.getImageUrls());
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
         // 2. Tìm User trong DB
         User seller = userRepository.findByUsername(username)
@@ -42,6 +41,7 @@ public class AuctionService {
         auction.setDescription(request.getDescription());
         auction.setStartingPrice(request.getStartingPrice());
         auction.setCurrentPrice(request.getStartingPrice());
+        auction.setBuyNowPrice(request.getBuyNowPrice());
         auction.setStepPrice(request.getStepPrice());
         auction.setStartTime(request.getStartTime());
         auction.setEndTime(request.getEndTime());
@@ -60,68 +60,58 @@ public class AuctionService {
         return auctionRepository.save(auction);
     }
     public List<Auction> getAllAuctions() {
-        return auctionRepository.findAll();
+        LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
+        return auctionRepository.findActiveAndRecentlyClosed(twentyFourHoursAgo);
     }
     @Transactional
-    public Auction placeBid (Long auctionId , BigDecimal bidAmount){
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    public Auction placeBid(Long auctionId, BigDecimal bidAmount, String username) {
         User bidder = userRepository.findByUsername(username).
                 orElseThrow(() -> new RuntimeException("Username not found"));
 
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
 
-        // Kiểm tra giá đặt
-        BigDecimal minNextPrice = auction.getCurrentPrice().add(auction.getStepPrice());
-        if(bidAmount.compareTo(minNextPrice) < 0){
-            throw new RuntimeException("Giá đặt không hợp lệ! Phải tối thiểu là: " + minNextPrice);
-        }
-        // Kiểm tra số dư
-        if(bidder.getBalance().compareTo(bidAmount) < 0){
-            throw new RuntimeException("Số dư không đủ để đặt mức giá này!");
-        }
-        // Kiểm tra hợp lệ (Validate)
-        // 1. Phiên này còn mở không?
+        // --- 1. KIỂM TRA TRẠNG THÁI ---
         if (auction.getStatus() != AuctionStatus.OPEN) {
-            throw new RuntimeException("Phiên đấu giá đã kết thúc!");
+            throw new RuntimeException("Phiên đấu giá đã kết thúc hoặc chưa bắt đầu!");
         }
-        // Đã hết giờ chưa?
         if (LocalDateTime.now().isAfter(auction.getEndTime())) {
             auction.setStatus(AuctionStatus.CLOSED);
             auctionRepository.save(auction);
             throw new RuntimeException("Đã hết thời gian đấu giá!");
         }
-        // Ko đc đấu giá sản phẩm của mình
         if (auction.getSeller().getId().equals(bidder.getId())) {
             throw new RuntimeException("Bạn không thể tự đấu giá sản phẩm của mình!");
         }
-        if(auction.getWinner() != null && auction.getWinner().getId().equals(bidder.getId())){
+        if (auction.getWinner() != null && auction.getWinner().getId().equals(bidder.getId())) {
             throw new RuntimeException("Bạn đang dẫn đầu rồi, không cần đặt thêm nữa!");
         }
-        // Tiền đặt có cao hơn giá hiện tại không?
-        if (bidAmount.compareTo(auction.getCurrentPrice()) <= 0) {
-            throw new RuntimeException("Giá đặt phải cao hơn giá hiện tại (" + auction.getCurrentPrice() + ")");
+
+        // --- 2. KIỂM TRA GIÁ VÀ TIỀN ---
+        BigDecimal minNextPrice = auction.getCurrentPrice().add(auction.getStepPrice());
+        if (bidAmount.compareTo(minNextPrice) < 0) {
+            throw new RuntimeException("Giá đặt không hợp lệ! Phải tối thiểu là: " + minNextPrice);
         }
-        // Ví có đủ tiền không?
         if (bidder.getBalance().compareTo(bidAmount) < 0) {
-            throw new RuntimeException("Số dư không đủ! (Ví: " + bidder.getBalance() + ")");
+            throw new RuntimeException("Số dư không đủ! (Ví hiện tại: " + bidder.getBalance() + ")");
         }
-        User PreviousWinner = auction.getWinner();
-        if(PreviousWinner != null){
+
+        // --- 3. XỬ LÝ DÒNG TIỀN ---
+        User previousWinner = auction.getWinner();
+        if (previousWinner != null) {
             BigDecimal refundAmount = auction.getCurrentPrice();
-            PreviousWinner.setBalance(PreviousWinner.getBalance().add(refundAmount));
-            userRepository.save(PreviousWinner);
+            previousWinner.setBalance(previousWinner.getBalance().add(refundAmount));
+            userRepository.save(previousWinner);
         }
-        // Trừ tiền người đấu giá
+
         bidder.setBalance(bidder.getBalance().subtract(bidAmount));
         userRepository.save(bidder);
 
-        // Cập nhật giá mới cho sản phẩm
+        // --- 4. CẬP NHẬT & LƯU ---
         auction.setCurrentPrice(bidAmount);
-        auction.setWinner(bidder); // Tạm thời người này đang thắng
+        auction.setWinner(bidder);
         auctionRepository.save(auction);
 
-        // 3. Lưu lịch sử Bid
         Bid bid = new Bid();
         bid.setAuction(auction);
         bid.setUser(bidder);
@@ -130,5 +120,43 @@ public class AuctionService {
         bidRepository.save(bid);
 
         return auction;
+    }
+    @Transactional
+    public Auction buyNow(Long auctionId, String username) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá!"));
+
+        // 1. Kiểm tra điều kiện
+        if (auction.getStatus() != AuctionStatus.OPEN) {
+            throw new RuntimeException("Phiên đấu giá này đã kết thúc hoặc chưa bắt đầu!");
+        }
+        if (auction.getBuyNowPrice() == null) {
+            throw new RuntimeException("Sản phẩm này không hỗ trợ mua đứt!");
+        }
+
+        User buyer = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+        if (buyer.getBalance().compareTo(auction.getBuyNowPrice()) < 0) {
+            throw new RuntimeException("Số dư không đủ để mua đứt sản phẩm này!");
+        }
+        User previousWinner = auction.getWinner();
+        if (previousWinner != null) {
+            previousWinner.setBalance(previousWinner.getBalance().add(auction.getCurrentPrice()));
+            userRepository.save(previousWinner);
+        }
+
+        // 2. Thực hiện chốt đơn
+        buyer.setBalance(buyer.getBalance().subtract(auction.getBuyNowPrice()));
+        userRepository.save(buyer);
+
+        User seller = auction.getSeller();
+        seller.setBalance(seller.getBalance().add(auction.getBuyNowPrice()));
+        userRepository.save(seller);
+
+        auction.setCurrentPrice(auction.getBuyNowPrice());
+        auction.setWinner(buyer);
+        auction.setStatus(AuctionStatus.CLOSED);
+        auction.setEndTime(LocalDateTime.now());
+        return auctionRepository.save(auction);
     }
 }

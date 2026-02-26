@@ -11,6 +11,7 @@ public class AuctionRequest {
     private String description;
     private BigDecimal startingPrice;
     private BigDecimal stepPrice;
+    private BigDecimal buyNowPrice;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<String> imageUrls;

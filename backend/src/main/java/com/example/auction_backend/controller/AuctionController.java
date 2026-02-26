@@ -11,7 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 @RestController
 @RequestMapping("/api/auctions")
@@ -23,8 +26,11 @@ public class AuctionController {
 
     // Tạo phiên đấu giá
     @PostMapping("/create")
-    public ResponseEntity<AuctionResponse> createAuction(@RequestBody AuctionRequest request) {
-        Auction newAuction = auctionService.createAuction(request);
+    public ResponseEntity<AuctionResponse> createAuction(
+            @RequestBody AuctionRequest request,
+            Principal principal
+    ) {
+        Auction newAuction = auctionService.createAuction(request, principal.getName());
         AuctionResponse responsePayload = AuctionResponse.fromEntity(newAuction);
         messagingTemplate.convertAndSend("/topic/auctions/", responsePayload);
         return ResponseEntity.ok(responsePayload);
@@ -34,9 +40,10 @@ public class AuctionController {
     @PostMapping("/{id}/bid")
     public ResponseEntity<AuctionResponse> placeBid(
                                                      @PathVariable Long id,
-                                                     @RequestParam BigDecimal amount
+                                                     @RequestParam BigDecimal amount,
+                                                     Principal principal
     ) {
-        Auction updatedAuction = auctionService.placeBid(id, amount);
+        Auction updatedAuction = auctionService.placeBid(id, amount , principal.getName());
         AuctionResponse responsePayload = AuctionResponse.fromEntity(updatedAuction);
         messagingTemplate.convertAndSend("/topic/auction/" + id, responsePayload);
         return ResponseEntity.ok(responsePayload);
@@ -64,7 +71,7 @@ public class AuctionController {
                                                                  @RequestParam(required = false) String keyword,
                                                                  @RequestParam(required = false) AuctionStatus status) {
 
-        List<Auction> auctions = auctionRepository.searchAuctions(keyword, status);
+        List<Auction> auctions = auctionRepository.searchAuctions(keyword, status );
         List<AuctionResponse> response = auctions.stream()
                 .map(AuctionResponse::fromEntity)
                 .toList();
@@ -96,5 +103,21 @@ public class AuctionController {
                 .stream()
                 .map(AuctionResponse::fromEntity)
                 .toList();
+    }
+    @PostMapping("/{id}/buy-now")
+    public ResponseEntity<?> buyNowAuction(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        try {
+            Auction updatedAuction = auctionService.buyNow(id, principal.getName());
+            AuctionResponse responsePayload = AuctionResponse.fromEntity(updatedAuction);
+            messagingTemplate.convertAndSend("/topic/auction/" + id, responsePayload);
+            messagingTemplate.convertAndSend("/topic/auctions/", responsePayload);
+
+            return ResponseEntity.ok(responsePayload);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 }
