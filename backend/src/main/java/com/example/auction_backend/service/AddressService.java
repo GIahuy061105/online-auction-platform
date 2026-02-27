@@ -57,4 +57,15 @@ public class AddressService {
     public void deleteAddress(Long id) {
         addressRepository.deleteById(id);
     }
+    @Transactional
+    public void setDefaultAddress(Long addressId, String username) {
+        Address selectedAddress = addressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ!"));
+        if (!selectedAddress.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Bạn không có quyền sửa địa chỉ của người khác!");
+        }
+        addressRepository.clearDefaultAddressForUser(username);
+        selectedAddress.setDefault(true);
+        addressRepository.save(selectedAddress);
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.auction_backend.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data

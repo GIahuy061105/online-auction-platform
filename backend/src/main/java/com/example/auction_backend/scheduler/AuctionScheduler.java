@@ -1,6 +1,7 @@
 package com.example.auction_backend.scheduler;
 
 import com.example.auction_backend.dto.response.AuctionResponse; // LƯU Ý: Import thêm DTO này
+import com.example.auction_backend.model.Address;
 import com.example.auction_backend.model.Auction;
 import com.example.auction_backend.enums.AuctionStatus;
 import com.example.auction_backend.model.User;
@@ -60,12 +61,17 @@ public class AuctionScheduler {
                     User seller = auction.getSeller();
                     BigDecimal finalPrice = auction.getCurrentPrice();
 
-                    // 👇 BỔ SUNG: Chuyển tiền cho người bán
                     seller.setBalance(seller.getBalance().add(finalPrice));
                     userRepository.save(seller);
+                    Address defaultAddr = winner.getDefaultAddress();
+                    if (defaultAddr != null) {
+                        auction.setDeliveryRecipientName(defaultAddr.getRecipientName());
+                        auction.setDeliveryPhone(defaultAddr.getPhoneNumber());
+                        auction.setDeliveryAddress(defaultAddr.getAddressLine() + ", " + defaultAddr.getDistrict() + ", " + defaultAddr.getCity());
+                    }
                 }
 
-                // 👇 BỔ SUNG: Bắn WebSocket báo hiệu phiên đã kết thúc
+
                 AuctionResponse responsePayload = AuctionResponse.fromEntity(auction);
                 messagingTemplate.convertAndSend("/topic/auction/" + auction.getId(), responsePayload);
                 messagingTemplate.convertAndSend("/topic/auctions/", responsePayload);

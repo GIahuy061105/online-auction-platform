@@ -1,5 +1,6 @@
 package com.example.auction_backend.service;
 import com.example.auction_backend.dto.request.AuctionRequest;
+import com.example.auction_backend.model.Address;
 import com.example.auction_backend.model.Auction;
 import com.example.auction_backend.enums.AuctionStatus;
 import com.example.auction_backend.model.Bid;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,6 +97,10 @@ public class AuctionService {
         if (bidder.getBalance().compareTo(bidAmount) < 0) {
             throw new RuntimeException("Số dư không đủ! (Ví hiện tại: " + bidder.getBalance() + ")");
         }
+        long secondsLeft = ChronoUnit.SECONDS.between(LocalDateTime.now(), auction.getEndTime());
+        if (secondsLeft < 180 && secondsLeft > 0) {
+            auction.setEndTime(auction.getEndTime().plusSeconds(120));
+        }
 
         // --- 3. XỬ LÝ DÒNG TIỀN ---
         User previousWinner = auction.getWinner();
@@ -156,6 +162,12 @@ public class AuctionService {
         auction.setCurrentPrice(auction.getBuyNowPrice());
         auction.setWinner(buyer);
         auction.setStatus(AuctionStatus.CLOSED);
+        Address defaultAddr = buyer.getDefaultAddress();
+        if (defaultAddr != null) {
+            auction.setDeliveryRecipientName(defaultAddr.getRecipientName());
+            auction.setDeliveryPhone(defaultAddr.getPhoneNumber());
+            auction.setDeliveryAddress(defaultAddr.getAddressLine() + ", " + defaultAddr.getDistrict() + ", " + defaultAddr.getCity());
+        }
         auction.setEndTime(LocalDateTime.now());
         return auctionRepository.save(auction);
     }

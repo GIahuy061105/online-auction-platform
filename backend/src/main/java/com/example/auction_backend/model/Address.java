@@ -1,6 +1,7 @@
 package com.example.auction_backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,6 +20,8 @@ public class Address {
     private String addressLine;   // Số nhà, đường
     private String city;          // Tỉnh/Thành phố
     private String district;      // Quận/Huyện
+
+    @JsonProperty("isDefault")
     private boolean isDefault;    // Địa chỉ mặc định
 
     @ManyToOne

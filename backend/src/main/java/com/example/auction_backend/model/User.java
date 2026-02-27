@@ -51,6 +51,19 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL)
     private List<Auction> auctions;
 
+
+    // Địa chỉ giao hàng
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Address> addresses;
+    @JsonIgnore
+    public Address getDefaultAddress() {
+        if (addresses == null || addresses.isEmpty()) return null;
+        return addresses.stream()
+                .filter(Address::isDefault)
+                .findFirst()
+                .orElse(addresses.get(0));
+    }
     //--- Cho việc lấy lại mật khẩu
     @Column(name = "reset_otp", length = 6)
     private String resetOtp;

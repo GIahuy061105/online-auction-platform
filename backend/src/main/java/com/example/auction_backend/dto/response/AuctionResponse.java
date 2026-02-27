@@ -27,6 +27,10 @@ public class AuctionResponse {
     private UserResponse seller;
     private UserResponse winner;
     private List<BidResponse> bidHistory;
+    // Giao hàng
+    private String deliveryRecipientName;
+    private String deliveryPhone;
+    private String deliveryAddress;
 
     // Hàm chuyển đổi từ Auction Entity sang AuctionResponse
     public static AuctionResponse fromEntity(Auction auction) {
@@ -54,6 +58,9 @@ public class AuctionResponse {
                             .map(BidResponse::fromEntity)
                             .sorted((a,b) -> b.getTime().compareTo(a.getTime()))
                             .toList() : List.of())
+                .deliveryRecipientName(auction.getDeliveryRecipientName())
+                .deliveryPhone(auction.getDeliveryPhone())
+                .deliveryAddress(auction.getDeliveryAddress())
                 .build();
     }
 }

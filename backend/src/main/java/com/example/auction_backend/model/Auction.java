@@ -64,4 +64,14 @@ public class Auction {
     // Giá mua đứt
     @Column(name ="buy_now_price")
     private BigDecimal buyNowPrice;
+
+    // Giao hàng
+    @Column(name = "delivery_recipient_name")
+    private String deliveryRecipientName;
+
+    @Column(name = "delivery_phone")
+    private String deliveryPhone;
+
+    @Column(name = "delivery_address")
+    private String deliveryAddress;
 }

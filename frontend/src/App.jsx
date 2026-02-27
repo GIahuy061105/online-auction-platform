@@ -6,6 +6,7 @@ import AuctionDetailsPage from './pages/AuctionDetailsPage'
 import ProfilePage from './pages/ProfilePage'
 import MyActivityPage from './pages/MyActivityPage';
 import RegisterPage from './pages/RegisterPage';
+import MyStorePage from './pages/MyStorePage';
 function App() {
   return (
       <BrowserRouter>
@@ -23,6 +24,8 @@ function App() {
               <Route path ="/profile" element={<ProfilePage/>} />
               {/*Route xem trang hoạt động */}
               <Route path="/my-activity" element={<MyActivityPage />} />
+              {/*Route xem các sản phẩm bản thân đã bán */}
+              <Route path="/my-store" element={<MyStorePage />} />
            </Routes>
       </BrowserRouter>
   );

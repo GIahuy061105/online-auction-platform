@@ -1,5 +1,5 @@
 import { Layout, Menu, Avatar, Dropdown, Modal, Button, Descriptions, message } from 'antd';
-import { UserOutlined, LogoutOutlined, WalletOutlined, MailOutlined, PlusCircleOutlined , ShopOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, WalletOutlined, MailOutlined, PlusCircleOutlined , ShopOutlined , ShoppingOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -57,7 +57,13 @@ const Navbar = () => {
                 label: 'Hoạt động của tôi',
                 icon: <ShopOutlined />,
                 onClick: () => navigate('/my-activity'),
-          },
+        },
+        {
+            key: '/my-store',
+            label: 'Cửa hàng của tôi',
+            icon: <ShoppingOutlined />,
+             onClick: () => navigate('/my-store'),
+        },
         {
             type: 'divider',
         },
