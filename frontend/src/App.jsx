@@ -7,6 +7,7 @@ import ProfilePage from './pages/ProfilePage'
 import MyActivityPage from './pages/MyActivityPage';
 import RegisterPage from './pages/RegisterPage';
 import MyStorePage from './pages/MyStorePage';
+import MyWishListPage from './pages/MyWishListPage';
 function App() {
   return (
       <BrowserRouter>
@@ -26,6 +27,8 @@ function App() {
               <Route path="/my-activity" element={<MyActivityPage />} />
               {/*Route xem các sản phẩm bản thân đã bán */}
               <Route path="/my-store" element={<MyStorePage />} />
+              {/*Route xem danh sách sản phẩm yêu thích */}
+              <Route path="/my-wishlist" element={<MyWishListPage />} />
            </Routes>
       </BrowserRouter>
   );

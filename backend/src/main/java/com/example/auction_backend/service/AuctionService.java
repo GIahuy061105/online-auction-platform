@@ -68,18 +68,16 @@ public class AuctionService {
     @Transactional
     public Auction placeBid(Long auctionId, BigDecimal bidAmount, String username) {
         User bidder = userRepository.findByUsername(username).
-                orElseThrow(() -> new RuntimeException("Username not found"));
+                orElseThrow(() -> new RuntimeException("Không tìm thấy tên người dùng"));
 
-        Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new RuntimeException("Auction not found"));
+        Auction auction = auctionRepository.findByIdForBidding(auctionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
 
         // --- 1. KIỂM TRA TRẠNG THÁI ---
         if (auction.getStatus() != AuctionStatus.OPEN) {
             throw new RuntimeException("Phiên đấu giá đã kết thúc hoặc chưa bắt đầu!");
         }
         if (LocalDateTime.now().isAfter(auction.getEndTime())) {
-            auction.setStatus(AuctionStatus.CLOSED);
-            auctionRepository.save(auction);
             throw new RuntimeException("Đã hết thời gian đấu giá!");
         }
         if (auction.getSeller().getId().equals(bidder.getId())) {
@@ -90,7 +88,12 @@ public class AuctionService {
         }
 
         // --- 2. KIỂM TRA GIÁ VÀ TIỀN ---
-        BigDecimal minNextPrice = auction.getCurrentPrice().add(auction.getStepPrice());
+        BigDecimal minNextPrice;
+        if (auction.getWinner() == null) {
+            minNextPrice = auction.getCurrentPrice(); // Người đầu tiên có thể đặt giá khởi điểm
+        } else {
+            minNextPrice = auction.getCurrentPrice().add(auction.getStepPrice()); // Người tiếp theo bắt đầu tính bước giá
+        }
         if (bidAmount.compareTo(minNextPrice) < 0) {
             throw new RuntimeException("Giá đặt không hợp lệ! Phải tối thiểu là: " + minNextPrice);
         }
@@ -129,7 +132,7 @@ public class AuctionService {
     }
     @Transactional
     public Auction buyNow(Long auctionId, String username) {
-        Auction auction = auctionRepository.findById(auctionId)
+        Auction auction = auctionRepository.findByIdWithDetails(auctionId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá!"));
 
         // 1. Kiểm tra điều kiện

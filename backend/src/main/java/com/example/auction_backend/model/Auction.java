@@ -59,7 +59,6 @@ public class Auction {
 
     // Danh sách các lượt bid của phiên này
     @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL)
-    @JsonIgnore
     private List<Bid> bids;
     // Giá mua đứt
     @Column(name ="buy_now_price")

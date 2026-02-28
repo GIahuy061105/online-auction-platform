@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Typography, Statistic, Tag, Button, InputNumber, Table, message, Spin, Form, Image , Space } from 'antd';
-import { RiseOutlined, ArrowLeftOutlined, UserOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { RiseOutlined, ArrowLeftOutlined, UserOutlined, LeftOutlined, RightOutlined , HeartOutlined, HeartFilled} from '@ant-design/icons';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { Client } from '@stomp/stompjs';
@@ -18,10 +18,11 @@ const AuctionDetailPage = () => {
     const navigate = useNavigate();
     const [auction, setAuction] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [bidding, setBidding] = useState(false);
+    const [bidding, setBidding] = useState(false);// Đấu giá
     const [loadingBuyNow, setLoadingBuyNow] = useState(false);
-    const [selectedMedia, setSelectedMedia] = useState(null);
-    const deadline = auction ? new Date(auction.endTime).getTime() : 0;
+    const [selectedMedia, setSelectedMedia] = useState(null);// Ảnh
+    const deadline = auction ? new Date(auction.endTime).getTime() : 0;// Độ đếm
+    const [isLiked, setIsLiked] = useState(false);// Thả tim
     const isVideo = (url) => {
         return url && url.match(/\.(mp4|webm|ogg|mov)$/i);
     };
@@ -80,6 +81,7 @@ const AuctionDetailPage = () => {
 
     useEffect(() => {
         fetchAuctionDetail();
+        checkWishlistStatus();
         const stompClient = new Client({
             webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
             onConnect: () => {
@@ -117,6 +119,40 @@ const AuctionDetailPage = () => {
             setBidding(false);
         }
     };
+    const handleToggleWishlist = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                message.warning("Vui lòng đăng nhập để sử dụng tính năng Yêu thích!");
+                setTimeout(() => {
+                    navigate('/');
+                }, 1000);
+                return;
+            }
+
+            // 2. Nếu đã đăng nhập thì mới gọi API
+            try {
+                const response = await api.post(`/wishlists/toggle/${id}`);
+                setIsLiked(response.data.isLiked);
+                if (response.data.isLiked) {
+                    message.success("❤️ Đã thêm vào danh sách yêu thích!");
+                } else {
+                    message.info("Đã bỏ yêu thích.");
+                }
+            } catch (error) {
+                console.log("Lỗi thả tim:", error);
+            }
+        };
+        const checkWishlistStatus = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                const response = await api.get(`/wishlists/check/${id}`);
+                setIsLiked(response.data);
+            } catch (error) {
+                console.log("Lỗi khi kiểm tra trạng thái yêu thích:", error);
+            }
+        };
 
     if (loading) return (
         <div style={{ textAlign: 'center', marginTop: 100 }}>
@@ -227,6 +263,20 @@ const AuctionDetailPage = () => {
                             <Tag color={isOpen ? 'green' : 'red'} style={{ fontSize: 14, padding: '5px 10px', marginBottom: 20 }}>
                                 {auction.status === 'OPEN' ? 'ĐANG MỞ ĐẤU GIÁ' : auction.status}
                             </Tag>
+                            <Button
+                                                                size="large"
+                                                                icon={isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+                                                                onClick={handleToggleWishlist}
+                                                                style={{
+                                                                    borderColor: isLiked ? '#ff4d4f' : '#d9d9d9',
+                                                                    color: isLiked ? '#ff4d4f' : 'inherit',
+                                                                    borderRadius: '8px',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center'
+                                                                }}
+                                                            >
+                                                                {isLiked ? 'Đã yêu thích' : 'Yêu thích'}
+                                                            </Button>
 
 
                             <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, marginBottom: 20, border: '1px solid #f0f0f0' }}>

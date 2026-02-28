@@ -34,6 +34,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Cho phép Swagger
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/api/wishlists/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/**").permitAll()
                         .anyRequest().authenticated() // Còn lại phải có Token
                 )
