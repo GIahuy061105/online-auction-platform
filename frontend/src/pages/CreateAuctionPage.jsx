@@ -1,4 +1,4 @@
-import { Form, Input, InputNumber, DatePicker, Button, Card, message, Row, Col, Upload } from 'antd';
+import { Form,Select, Input, InputNumber, DatePicker, Button, Card, message, Row, Col, Upload } from 'antd';
 import { RocketOutlined, PlusOutlined } from '@ant-design/icons';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
@@ -49,6 +49,7 @@ const CreateAuctionPage = () => {
             const payload = {
                 productName: values.productName,
                 description: values.description,
+                category: values.category,
                 startingPrice: values.startingPrice,
                 stepPrice: values.stepPrice,
                 buyNowPrice: values.buyNowPrice || null,
@@ -132,6 +133,23 @@ const CreateAuctionPage = () => {
                             rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}
                         >
                             <Input placeholder="Ví dụ: iPhone 15 Pro Max Titanium" size="large" />
+                        </Form.Item>
+                        <Form.Item
+                            name="category"
+                            label="Danh mục sản phẩm"
+                            rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}
+                        >
+                            <Select placeholder="-- Chọn danh mục phù hợp --" size="large">
+                                <Select.Option value="SMARTPHONES">📱 Điện thoại thông minh</Select.Option>
+                                <Select.Option value="LAPTOPS">💻 Laptop & Máy tính xách tay</Select.Option>
+                                <Select.Option value="TABLETS">💊 Tablet & Máy tính bảng</Select.Option>
+                                <Select.Option value="AUDIO">🎧 Thiết bị âm thanh (Tai nghe, Loa)</Select.Option>
+                                <Select.Option value="WEARABLES">⌚ Thiết bị đeo (Smartwatch)</Select.Option>
+                                <Select.Option value="GAMING">🎮 Máy chơi game (Console)</Select.Option>
+                                <Select.Option value="PC_COMPONENTS">⚙️ Linh kiện PC</Select.Option>
+                                <Select.Option value="ACCESSORIES">⌨️ Phụ kiện công nghệ</Select.Option>
+                                <Select.Option value="OTHER_ELECTRONICS">📦 Đồ điện tử khác</Select.Option>
+                            </Select>
                         </Form.Item>
 
                         <Form.Item

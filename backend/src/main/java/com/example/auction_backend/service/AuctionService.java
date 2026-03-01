@@ -1,5 +1,6 @@
 package com.example.auction_backend.service;
 import com.example.auction_backend.dto.request.AuctionRequest;
+import com.example.auction_backend.enums.Category;
 import com.example.auction_backend.model.Address;
 import com.example.auction_backend.model.Auction;
 import com.example.auction_backend.enums.AuctionStatus;
@@ -28,6 +29,7 @@ public class AuctionService {
     private final UserRepository userRepository;
     private final BidRepository bidRepository;
 
+    // Tạo phiên đấu giá
     public Auction createAuction(AuctionRequest request , String username) {
         // 1. Lấy username của người đang đăng nhập từ Security Context
         System.out.println("--- CREATE AUCTION ---");
@@ -48,6 +50,7 @@ public class AuctionService {
         auction.setStartTime(request.getStartTime());
         auction.setEndTime(request.getEndTime());
         auction.setSeller(seller);
+        auction.setCategory(request.getCategory() != null ? request.getCategory() : Category.OTHER_ELECTRONICS);
         LocalDateTime now = LocalDateTime.now();
         if(request.getImageUrls() != null && !request.getImageUrls().isEmpty()){
             auction.setImageUrls(request.getImageUrls());
@@ -61,10 +64,12 @@ public class AuctionService {
         }
         return auctionRepository.save(auction);
     }
+    // Lấy tất cả phiên
     public List<Auction> getAllAuctions() {
         LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
         return auctionRepository.findActiveAndRecentlyClosed(twentyFourHoursAgo);
     }
+    // Đặt giá
     @Transactional
     public Auction placeBid(Long auctionId, BigDecimal bidAmount, String username) {
         User bidder = userRepository.findByUsername(username).
@@ -130,6 +135,7 @@ public class AuctionService {
 
         return auction;
     }
+    // Hàm mua đứt
     @Transactional
     public Auction buyNow(Long auctionId, String username) {
         Auction auction = auctionRepository.findByIdWithDetails(auctionId)
@@ -173,5 +179,17 @@ public class AuctionService {
         }
         auction.setEndTime(LocalDateTime.now());
         return auctionRepository.save(auction);
+    }
+    // Hàm tìm vật phẩm gợi ý
+    public List<Auction> getRecommendations(Long currentAuctionId) {
+        Auction currentAuction = auctionRepository.findById(currentAuctionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
+        Category currentCategory = currentAuction.getCategory() != null ? currentAuction.getCategory() : Category.OTHER_ELECTRONICS;
+
+        return auctionRepository.findTop4ByCategoryAndStatusAndIdNotOrderByEndTimeAsc(
+                currentCategory,
+                AuctionStatus.OPEN,
+                currentAuctionId
+        );
     }
 }

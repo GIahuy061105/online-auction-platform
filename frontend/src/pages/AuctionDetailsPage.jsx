@@ -8,7 +8,7 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 const { Countdown } = Statistic;
 const { Title, Paragraph } = Typography;
-
+import AuctionCard from '../components/AuctionCard';
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 };
@@ -23,6 +23,7 @@ const AuctionDetailPage = () => {
     const [selectedMedia, setSelectedMedia] = useState(null);// Ảnh
     const deadline = auction ? new Date(auction.endTime).getTime() : 0;// Độ đếm
     const [isLiked, setIsLiked] = useState(false);// Thả tim
+    const [recommendations, setRecommendations] = useState([]); // Gớij ý
     const isVideo = (url) => {
         return url && url.match(/\.(mp4|webm|ogg|mov)$/i);
     };
@@ -80,7 +81,9 @@ const AuctionDetailPage = () => {
     };
 
     useEffect(() => {
+        window.scrollTo(0, 0);
         fetchAuctionDetail();
+        fetchRecommendations();
         checkWishlistStatus();
         const stompClient = new Client({
             webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
@@ -151,6 +154,14 @@ const AuctionDetailPage = () => {
                 setIsLiked(response.data);
             } catch (error) {
                 console.log("Lỗi khi kiểm tra trạng thái yêu thích:", error);
+            }
+        };
+        const fetchRecommendations = async () => {
+            try {
+                const response = await api.get(`/auctions/${id}/recommendations`);
+                setRecommendations(response.data);
+            } catch (error) {
+                console.log("Lỗi lấy sản phẩm gợi ý:", error);
             }
         };
 
@@ -254,6 +265,21 @@ const AuctionDetailPage = () => {
                                 <Paragraph style={{ fontSize: 16, whiteSpace: 'pre-line' }}>{auction.description}</Paragraph>
                             </div>
                         </Card>
+                        {recommendations.length > 0 && (
+                            <div style={{ marginTop: 30 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
+                                    <Title level={4} style={{ margin: 0 }}>🔥 Có thể bạn sẽ thích</Title>
+                                </div>
+
+                                <Row gutter={[16, 16]}>
+                                    {recommendations.map(item => (
+                                        <Col xs={24} sm={12} key={item.id}>
+                                            <AuctionCard auction={item} />
+                                        </Col>
+                                    ))}
+                                </Row>
+                            </div>
+                        )}
                     </Col>
 
                     <Col xs={24} md={10}>

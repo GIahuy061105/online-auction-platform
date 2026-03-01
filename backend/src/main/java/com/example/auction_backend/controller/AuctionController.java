@@ -3,6 +3,7 @@ package com.example.auction_backend.controller;
 import com.example.auction_backend.dto.request.AuctionRequest;
 import com.example.auction_backend.dto.response.AuctionResponse;
 import com.example.auction_backend.enums.AuctionStatus;
+import com.example.auction_backend.enums.Category;
 import com.example.auction_backend.model.Auction;
 import com.example.auction_backend.repository.AuctionRepository;
 import com.example.auction_backend.service.AuctionService;
@@ -118,6 +119,28 @@ public class AuctionController {
             return ResponseEntity.ok(responsePayload);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+    @GetMapping("/{id}/recommendations")
+    public ResponseEntity<List<AuctionResponse>> getRecommendations(@PathVariable Long id) {
+        List<AuctionResponse> responses = auctionService.getRecommendations(id)
+                .stream()
+                .map(AuctionResponse::fromEntity)
+                .toList();
+        return ResponseEntity.ok(responses);
+    }
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<AuctionResponse>> getAuctionsByCategory(@PathVariable String category) {
+        try {
+            Category catEnum = Category.valueOf(category.toUpperCase());
+            List<Auction> auctions = auctionRepository.findByCategoryAndStatusOrderByStartTimeDesc(catEnum, AuctionStatus.OPEN);
+            List<AuctionResponse> responses = auctions.stream()
+                    .map(AuctionResponse::fromEntity)
+                    .toList();
+
+            return ResponseEntity.ok(responses);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 }

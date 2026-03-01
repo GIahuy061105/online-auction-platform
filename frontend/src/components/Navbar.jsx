@@ -99,7 +99,7 @@ const Navbar = () => {
                 padding: '0 30px',
                 boxSizing: 'border-box'}}>
                 <div style={{ color: 'red', fontSize: 20, fontWeight: 'bold', cursor: 'pointer' }} onClick={() => navigate('/auction')}>
-                    🏛️ GIA HUY AUCTION
+                    🏛️  SDKAUCTION
                 </div>
 
                 {/* Nút đăng bán sản phẩm và Avatar */}

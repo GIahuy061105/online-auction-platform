@@ -1,5 +1,6 @@
 package com.example.auction_backend.dto.response;
 
+import com.example.auction_backend.enums.Category;
 import com.example.auction_backend.model.Auction;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +32,8 @@ public class AuctionResponse {
     private String deliveryRecipientName;
     private String deliveryPhone;
     private String deliveryAddress;
+    // Danh mục
+    private Category category;
 
     // Hàm chuyển đổi từ Auction Entity sang AuctionResponse
     public static AuctionResponse fromEntity(Auction auction) {
@@ -52,6 +55,7 @@ public class AuctionResponse {
                 .status(auction.getStatus().name())
                 .buyNowPrice(auction.getBuyNowPrice())
                 .seller(UserResponse.fromEntity(auction.getSeller()))
+                .category(auction.getCategory())
                 .winner(auction.getWinner() != null ? UserResponse.fromEntity(auction.getWinner()) : null)
                 .bidHistory(auction.getBids() != null ?
                     auction.getBids().stream()

@@ -1,5 +1,6 @@
 package com.example.auction_backend.dto.request;
 
+import com.example.auction_backend.enums.Category;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,4 +16,5 @@ public class AuctionRequest {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<String> imageUrls;
+    private Category category;
 }

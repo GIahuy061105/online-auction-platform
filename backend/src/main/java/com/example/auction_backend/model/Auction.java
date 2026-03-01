@@ -1,6 +1,7 @@
 package com.example.auction_backend.model;
 
 import com.example.auction_backend.enums.AuctionStatus;
+import com.example.auction_backend.enums.Category;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -46,7 +47,9 @@ public class Auction {
 
     @Enumerated(EnumType.STRING)
     private AuctionStatus status; // Enum: OPEN, CLOSED, CANCELLED
-
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category")
+    private Category category;
     // Người bán (Ai tạo phiên đấu giá này?)
     @ManyToOne
     @JoinColumn(name = "seller_id", nullable = false)

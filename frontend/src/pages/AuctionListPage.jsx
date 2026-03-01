@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Row, Col, Input, Select, Spin, Empty, Typography, Card } from 'antd';
-import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { SearchOutlined, FilterOutlined ,AppstoreOutlined,MobileOutlined,LaptopOutlined,TabletOutlined,
+    CustomerServiceOutlined,ClockCircleOutlined,PlaySquareOutlined,SettingOutlined,ApiOutlined, AppstoreAddOutlined} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
@@ -8,10 +9,32 @@ import AuctionCard from '../components/AuctionCard';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { message } from 'antd';
+import Icon from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Option } = Select;
-
+const GamepadSvg = () => (
+  <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <path d="M6 12h4" />
+    <path d="M8 10v4" />
+    <circle cx="15" cy="13" r="1" fill="currentColor" />
+    <circle cx="18" cy="11" r="1" fill="currentColor" />
+  </svg>
+);
+const GamepadIcon = (props) => <Icon component={GamepadSvg} {...props} />;
+const CATEGORIES = [
+    { key: 'ALL', label: 'Tất cả', icon: <AppstoreOutlined /> },
+    { key: 'SMARTPHONES', label: 'Điện thoại', icon: <MobileOutlined /> },
+    { key: 'LAPTOPS', label: 'Laptop', icon: <LaptopOutlined /> },
+    { key: 'TABLETS', label: 'Tablet', icon: <TabletOutlined /> },
+    { key: 'AUDIO', label: 'Âm thanh', icon: <CustomerServiceOutlined /> },
+    { key: 'WEARABLES', label: 'Đồng hồ', icon: <ClockCircleOutlined /> },
+    { key: 'GAMING', label: 'Gaming', icon: <GamepadIcon /> },
+    { key: 'PC_COMPONENTS', label: 'Linh kiện PC', icon: <SettingOutlined /> },
+    { key: 'ACCESSORIES', label: 'Phụ kiện', icon: <ApiOutlined /> },
+    { key: 'OTHER_ELECTRONICS', label: 'Khác', icon: <AppstoreAddOutlined /> }
+];
 const AuctionListPage = () => {
     const [auctions, setAuctions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -21,7 +44,7 @@ const AuctionListPage = () => {
     const [status, setStatus] = useState(null);
 
     const navigate = useNavigate();
-
+    const [selectedCategory, setSelectedCategory] = useState('ALL');
     // Hàm gọi API tìm kiếm
     const fetchAuctions = async () => {
             setLoading(true);
@@ -29,7 +52,9 @@ const AuctionListPage = () => {
                 let url = '/auctions';
                 let params = {};
 
-                if (keyword || status) {
+                if (selectedCategory !== 'ALL') {
+                    url = `/auctions/category/${selectedCategory}`;
+                } else if (keyword || status) {
                     url = '/auctions/search';
                     params = { keyword: keyword, status: status };
                 }
@@ -47,7 +72,7 @@ const AuctionListPage = () => {
         };
     useEffect(() => {
         fetchAuctions();
-    }, [keyword, status]);
+    }, [keyword, status , selectedCategory]);
 
     useEffect(() => {
         const stompClient =  new Client({
@@ -81,6 +106,67 @@ const AuctionListPage = () => {
     return (
         <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', paddingTop: 80 }}>
             <Navbar />
+            <div style={{ backgroundColor: '#fff', padding: '15px 0', borderBottom: '1px solid #e8e8e8', marginBottom: 25, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px' }}>
+                    <div style={{
+                        display: 'flex',
+                        overflowX: 'auto',
+                        gap: '20px',
+                        paddingTop: '10px',
+                        paddingBottom: '15px',
+                        scrollbarWidth: 'none', // Ẩn scrollbar trên Firefox
+                        msOverflowStyle: 'none'  // Ẩn scrollbar trên IE
+                    }}>
+                    <style>{`
+                        div::-webkit-scrollbar { display: none; } /* Ẩn scroll trên Chrome */
+                    `}</style>
+                    <div style={{
+                        display: 'flex',
+                        gap: '20px',
+                        margin: '0 auto',
+                        width: 'max-content'
+                    }}>
+                    {CATEGORIES.map((cat) => (
+                        <div
+                            key={cat.key}
+                            onClick={() => setSelectedCategory(cat.key)}
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minWidth: '85px',
+                                cursor: 'pointer',
+                                opacity: selectedCategory === cat.key ? 1 : 0.6,
+                                transform: selectedCategory === cat.key ? 'scale(1.05)' : 'scale(1)',
+                                transition: 'all 0.3s cubic-bezier(0.25 , 0.8 , 0.25 , 1)',
+                            }}
+                        >
+                        <div style={{
+                            fontSize: '28px',
+                            marginBottom: '8px',
+                            backgroundColor: selectedCategory === cat.key ? '#e6f4ff' : '#f5f5f5',
+                            padding: '12px',
+                            borderRadius: '16px', // Bo góc mềm mại kiểu Apple
+                            border: selectedCategory === cat.key ? '2px solid #1890ff' : '2px solid transparent',
+                            boxSizing: 'border-box'
+                        }}>
+                    {cat.icon}
+                        </div>
+                            <span style={{
+                                fontSize: '14px',
+                                fontWeight: selectedCategory === cat.key ? '600' : '400',
+                                color: selectedCategory === cat.key ? '#1890ff' : '#555',
+                                whiteSpace: 'nowrap'
+                            }}>
+                        {cat.label}
+                            </span>
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+                </div>
+            </div>
 
             <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px' }}>
 

@@ -1,6 +1,7 @@
 package com.example.auction_backend.repository;
 
 import com.example.auction_backend.enums.AuctionStatus;
+import com.example.auction_backend.enums.Category;
 import com.example.auction_backend.model.Auction;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -52,4 +53,11 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM Auction a WHERE a.id = :id")
     Optional<Auction> findByIdForBidding(@Param("id") Long id);
+
+    // Danh mục sản phẩm và gợi ý sản phẩm
+    @EntityGraph(attributePaths = {"seller", "imageUrls"})
+    List<Auction> findTop4ByCategoryAndStatusAndIdNotOrderByEndTimeAsc(Category category, AuctionStatus status, Long id);
+
+    @EntityGraph(attributePaths = {"seller", "imageUrls"})
+    List<Auction> findByCategoryAndStatusOrderByStartTimeDesc(Category category, AuctionStatus status);
 }
