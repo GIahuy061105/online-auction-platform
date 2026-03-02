@@ -11,6 +11,7 @@ import com.example.auction_backend.repository.BidRepository;
 import com.example.auction_backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +31,7 @@ public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
     private final BidRepository bidRepository;
-
+    private final SimpMessagingTemplate messagingTemplate;
     // Tạo phiên đấu giá
     public Auction createAuction(AuctionRequest request , String username) {
         // 1. Lấy username của người đang đăng nhập từ Security Context
@@ -116,8 +119,21 @@ public class AuctionService {
             BigDecimal refundAmount = auction.getCurrentPrice();
             previousWinner.setBalance(previousWinner.getBalance().add(refundAmount));
             userRepository.save(previousWinner);
+        // --- 3.5 Thông báo Real Time
+            Map<String, Object> outbidNotif = new HashMap<>();
+            outbidNotif.put("title", "⚠️ Bị vượt giá!");
+            outbidNotif.put("message", "Tài khoản " + bidder.getUsername() + " vừa trả giá cao hơn bạn cho món: " + auction.getProductName());
+            outbidNotif.put("auctionId", auction.getId());
+            outbidNotif.put("type", "warning");
+            messagingTemplate.convertAndSend("/topic/notifications/" + previousWinner.getUsername(),(Object) outbidNotif);
         }
+        Map<String, Object> sellerNotif = new HashMap<>();
+        sellerNotif.put("title", "🎉 Có người đặt giá!");
+        sellerNotif.put("message", bidder.getUsername() + " vừa đặt " + bidAmount + "đ cho sản phẩm " + auction.getProductName());
+        sellerNotif.put("auctionId", auction.getId());
+        sellerNotif.put("type", "success");
 
+        messagingTemplate.convertAndSend("/topic/notifications/" + auction.getSeller().getUsername(), (Object) sellerNotif);
         bidder.setBalance(bidder.getBalance().subtract(bidAmount));
         userRepository.save(bidder);
 

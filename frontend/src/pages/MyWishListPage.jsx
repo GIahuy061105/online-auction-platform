@@ -47,7 +47,7 @@ const MyWishlistPage = () => {
             <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px' }}>
                 <Title level={2} style={{ marginBottom: 30 }}>
                     <HeartFilled style={{ color: '#ff4d4f', marginRight: 10 }} />
-                    Sản phẩm tôi yêu thích
+                    Sản phẩm yêu thích
                 </Title>
 
                 {loading ? (

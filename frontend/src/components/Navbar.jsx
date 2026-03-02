@@ -1,7 +1,9 @@
-import { Layout, Menu, Avatar, Dropdown, Modal, Button, Descriptions, message } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Modal, Button, Descriptions, message, notification } from 'antd';
 import { UserOutlined, LogoutOutlined, WalletOutlined, MailOutlined, PlusCircleOutlined,HeartOutlined , ShopOutlined , ShoppingOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 import api from '../services/api';
 
 const { Header } = Layout;
@@ -36,7 +38,39 @@ const Navbar = () => {
                 handleLogout();
             }
         };
+    useEffect(() => {
+            // Chỉ kích hoạt WebSocket khi đã gọi API thành công và có username
+            if (!userProfile?.username) return;
 
+            const stompClient = new Client({
+                webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+                onConnect: () => {
+                    console.log(`🔔 [Navbar] Đã kết nối kênh thông báo của: ${userProfile.username}`);
+                    stompClient.subscribe(`/topic/notifications/${userProfile.username}`, (msg) => {
+                        const data = JSON.parse(msg.body);
+                        notification[data.type || 'info']({
+                            message: data.title,
+                            description: data.message,
+                            placement: 'topRight',
+                            duration: 8,
+                            style: { cursor: 'pointer' },
+                            onClick: () => {
+                                if(data.auctionId) {
+                                    navigate(`/auction/${data.auctionId}`);
+                                }
+                            }
+                        });
+                    });
+                }
+            });
+            stompClient.activate();
+
+            return () => {
+                if (stompClient.active) {
+                    stompClient.deactivate();
+                }
+            };
+        }, [userProfile?.username, navigate]);
     // Hàm đăng xuất
     const handleLogout = () => {
         localStorage.removeItem('token');
