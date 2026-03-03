@@ -10,6 +10,7 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { message } from 'antd';
 import Icon from '@ant-design/icons';
+import AppFooter from '../components/Footer';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -217,6 +218,7 @@ const AuctionListPage = () => {
                     <Empty description="Không tìm thấy sản phẩm nào" style={{ marginTop: 100 }} />
                 )}
             </div>
+            <AppFooter />
         </div>
     );
 };

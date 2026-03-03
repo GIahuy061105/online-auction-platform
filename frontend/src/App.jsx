@@ -1,4 +1,5 @@
 import {BrowserRouter , Routes, Route ,Navigate } from 'react-router-dom';
+import { Typography , Card} from 'antd';
 import LoginPage from './pages/LoginPage'
 import AuctionListPage from './pages/AuctionListPage'
 import CreateAuctionPage from './pages/CreateAuctionPage'
@@ -8,6 +9,10 @@ import MyActivityPage from './pages/MyActivityPage';
 import RegisterPage from './pages/RegisterPage';
 import MyStorePage from './pages/MyStorePage';
 import MyWishListPage from './pages/MyWishListPage';
+import InfoPage from './pages/InfoPage';
+import ContactPage from './pages/ContactPage';
+import {INFO_ROUTES_DATA} from './components/InfoRoutes';
+const { Title, Paragraph, Text } = Typography;
 function App() {
   return (
       <BrowserRouter>
@@ -29,6 +34,14 @@ function App() {
               <Route path="/my-store" element={<MyStorePage />} />
               {/*Route xem danh sách sản phẩm yêu thích */}
               <Route path="/my-wishlist" element={<MyWishListPage />} />
+              <Route path="/users/contact" element={<ContactPage />} />
+              {INFO_ROUTES_DATA.map((item) => (
+                                <Route
+                                  key={item.path}
+                                  path={item.path}
+                                  element={<InfoPage title={item.title} content={item.content} />}
+                                />
+              ))}
            </Routes>
       </BrowserRouter>
   );

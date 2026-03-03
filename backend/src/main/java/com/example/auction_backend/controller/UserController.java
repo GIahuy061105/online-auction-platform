@@ -1,9 +1,12 @@
 package com.example.auction_backend.controller;
 
+import com.example.auction_backend.dto.request.ContactRequest;
 import com.example.auction_backend.dto.request.UpdateProfileRequest;
 import com.example.auction_backend.dto.response.UserProfileResponse;
 import com.example.auction_backend.model.User;
 import com.example.auction_backend.repository.UserRepository;
+import com.example.auction_backend.service.ContactService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserRepository userRepository;
-
+    private final ContactService contactService;
     //Xem thông tin ng dùng
     @GetMapping("/my-profile")
     public ResponseEntity<UserProfileResponse> getMyProfile() {
@@ -35,5 +38,10 @@ public class UserController {
         if (request.getPhoneNumber() != null) user.setPhoneNumber(request.getPhoneNumber());
         User updatedUser = userRepository.save(user);
         return ResponseEntity.ok(UserProfileResponse.fromEntity(updatedUser));
+    }
+    @PostMapping("/contact")
+    public ResponseEntity<?> contact(@RequestBody ContactRequest request , HttpServletRequest httpRequest) {
+            contactService.sendContactMessage(request , httpRequest);
+            return ResponseEntity.ok("Đã gửi tin nhắn thành công!");
     }
 }
