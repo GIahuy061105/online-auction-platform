@@ -47,10 +47,8 @@ const AddressManager = () => {
         }
     };
 
-    // 👇 THÊM HÀM NÀY: Xử lý khi bấm nút "Thiết lập mặc định"
     const handleSetDefault = async (id) => {
         try {
-            // Giả định bạn sẽ tạo 1 API PUT để đổi trạng thái mặc định ở Backend
             await api.put(`/users/addresses/${id}/default`);
             message.success('Đã cập nhật địa chỉ mặc định!');
             fetchAddresses();
@@ -66,10 +64,8 @@ const AddressManager = () => {
                             itemLayout="horizontal"
                             dataSource={addresses}
                             renderItem={(item) => (
-                                // Ép List.Item xóa hết style mặc định của AntD
                                 <List.Item style={{ padding: 0, border: 'none', marginBottom: '16px' }}>
 
-                                    {/* 👇 DÙNG THẺ DIV NÀY ĐỂ TẠO KHUNG SÁNG, ANTD KHÔNG ĐÈ ĐƯỢC */}
                                     <div style={{
                                         width: '100%',
                                         display: 'flex',
