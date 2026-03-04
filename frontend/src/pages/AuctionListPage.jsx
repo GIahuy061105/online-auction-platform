@@ -77,7 +77,7 @@ const AuctionListPage = () => {
 
     useEffect(() => {
         const stompClient =  new Client({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            webSocketFactory: () => new SockJS(`${process.env.REACT_APP_WS_URL || 'http://localhost:8080'}/ws`),
             onConnect: () =>{
                 console.log("🟢 [List Page] Đã kết nối WebSocket!");
                 stompClient.subscribe('/topic/auctions/',(msg) => {
