@@ -24,6 +24,5 @@ npm-debug.log
 yarn-error.log
 
 # --- File môi trường & Bảo mật (QUAN TRỌNG) ---
-.env
 .DS_Store
 Thumbs.db
