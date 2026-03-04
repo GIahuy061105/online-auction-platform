@@ -2,7 +2,7 @@ import axios from 'axios';
 
 console.log('API URL:', process.env.REACT_APP_API_URL);
 const api = axios.create({
-  baseURL: 'https://sdkauction.up.railway.app/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
 });
 
 // 1. REQUEST INTERCEPTOR: Gắn token trước khi gửi đi
