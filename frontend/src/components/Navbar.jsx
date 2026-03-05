@@ -132,9 +132,12 @@ const Navbar = () => {
                 justifyContent: 'space-between',
                 padding: '0 30px',
                 boxSizing: 'border-box'}}>
-                <div style={{ color: 'red', fontSize: 20, fontWeight: 'bold', cursor: 'pointer' }} onClick={() => navigate('/auction')}>
-                    🏛️  SDKAUCTION
-                </div>
+                <img
+                    src="/LOGO.png"
+                    alt="SDKAuction"
+                    style={{ height: 45, cursor: 'pointer', objectFit: 'contain' }}
+                    onClick={() => navigate('/auction')}
+                />
 
                 {/* Nút đăng bán sản phẩm và Avatar */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
