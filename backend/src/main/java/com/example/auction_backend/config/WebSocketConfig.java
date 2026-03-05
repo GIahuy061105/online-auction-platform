@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://localhost:5173") // 👈 Phải là link đích danh
+                .setAllowedOrigins("http://localhost:5173","https://sdkauction.vercel.app") // 👈 Phải là link đích danh
                 .withSockJS();
     }
 }
