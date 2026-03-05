@@ -6,9 +6,11 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import AuctionCard from '../components/AuctionCard';
+
+
 const { Countdown } = Statistic;
 const { Title, Paragraph } = Typography;
-import AuctionCard from '../components/AuctionCard';
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 };
