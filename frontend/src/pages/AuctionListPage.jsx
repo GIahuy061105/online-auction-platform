@@ -76,11 +76,11 @@ const AuctionListPage = () => {
     }, [keyword, status , selectedCategory]);
 
     useEffect(() => {
-        const stompClient =  new Client({
-            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL || 'http://localhost:8080'}/ws`),
+        const client =  new Client({
+            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL || 'https://sdkauction.up.railway.app'}/ws`),
             onConnect: () =>{
                 console.log("🟢 [List Page] Đã kết nối WebSocket!");
-                stompClient.subscribe('/topic/auctions/',(msg) => {
+                client.subscribe('/topic/auctions/',(msg) => {
                     const newAuctionData = JSON.parse(msg.body);
                     setAuctions((prevAuctions) => {
                         const exists = prevAuctions.find(a => a.id === newAuctionData.id);
@@ -95,11 +95,11 @@ const AuctionListPage = () => {
                 });
             }
         });
-        stompClient.activate();
+        client.activate();
 
         return () => {
-            if(stompClient.active){
-                stompClient.deactivate();
+            if(client.active){
+                client.deactivate();
             }
         };
     }, []);

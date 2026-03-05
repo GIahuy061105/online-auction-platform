@@ -42,11 +42,11 @@ const Navbar = () => {
             // Chỉ kích hoạt WebSocket khi đã gọi API thành công và có username
             if (!userProfile?.username) return;
 
-            const stompClient = new Client({
+            const client = new Client({
                 webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
                 onConnect: () => {
                     console.log(`🔔 [Navbar] Đã kết nối kênh thông báo của: ${userProfile.username}`);
-                    stompClient.subscribe(`/topic/notifications/${userProfile.username}`, (msg) => {
+                    client.subscribe(`/topic/notifications/${userProfile.username}`, (msg) => {
                         const data = JSON.parse(msg.body);
                         notification[data.type || 'info']({
                             message: data.title,
@@ -63,11 +63,11 @@ const Navbar = () => {
                     });
                 }
             });
-            stompClient.activate();
+            client.activate();
 
             return () => {
-                if (stompClient.active) {
-                    stompClient.deactivate();
+                if (client.active) {
+                    client.deactivate();
                 }
             };
         }, [userProfile?.username, navigate]);
