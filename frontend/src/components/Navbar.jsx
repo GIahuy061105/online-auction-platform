@@ -133,9 +133,9 @@ const Navbar = () => {
                 padding: '0 30px',
                 boxSizing: 'border-box'}}>
                 <img
-                    src="/LOGO.png"
+                    src="/LOGO_nowatermark.png"
                     alt="SDKAuction"
-                    style={{ height: 45, cursor: 'pointer', objectFit: 'contain' }}
+                    style={{ height: 90, cursor: 'pointer', objectFit: 'contain' }}
                     onClick={() => navigate('/auction')}
                 />
 
