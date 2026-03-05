@@ -43,7 +43,7 @@ const Navbar = () => {
             if (!userProfile?.username) return;
 
             const client = new Client({
-                webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+                webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL || 'https://sdkauction.up.railway.app'}/ws`),
                 onConnect: () => {
                     console.log(`🔔 [Navbar] Đã kết nối kênh thông báo của: ${userProfile.username}`);
                     client.subscribe(`/topic/notifications/${userProfile.username}`, (msg) => {

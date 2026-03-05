@@ -1,8 +1,11 @@
 import axios from 'axios';
 
+console.log('API URL:', import.meta.env.VITE_API_URL);
 console.log('WebSocket:', import.meta.env.VITE_WS_URL);
+
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://sdkauction.up.railway.app'}/ws`,
+  baseURL: import.meta.env.VITE_API_URL || 'https://sdkauction.up.railway.app/api',
 });
 
 // 1. REQUEST INTERCEPTOR: Gắn token trước khi gửi đi
