@@ -160,7 +160,7 @@ const Navbar = () => {
                 }
 
                 .navbar-logo {
-                    height: 100px;
+                    height: 80px;
                     object-fit: contain;
                     cursor: pointer;
                     transition: opacity 0.2s;
