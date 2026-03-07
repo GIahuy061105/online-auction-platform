@@ -1,5 +1,5 @@
 import {BrowserRouter , Routes, Route ,Navigate } from 'react-router-dom';
-import { Typography , Card} from 'antd';
+import { Typography , Card , ConfigProvider} from 'antd';
 import LoginPage from './pages/LoginPage'
 import AuctionListPage from './pages/AuctionListPage'
 import CreateAuctionPage from './pages/CreateAuctionPage'
@@ -15,6 +15,28 @@ import {INFO_ROUTES_DATA} from './components/InfoRoutes';
 const { Title, Paragraph, Text } = Typography;
 function App() {
   return (
+      <ConfigProvider
+            theme={{
+              token: {
+                colorPrimary: '#0ea5a0',
+                colorLink: '#0ea5a0',
+                colorSuccess: '#52c41a',
+                colorWarning: '#faad14',
+                colorError: '#ff4d4f',
+                borderRadius: 10,
+                fontFamily: "'Be Vietnam Pro', sans-serif",
+              },
+              components: {
+                Button: {
+                  colorPrimary: '#0ea5a0',
+                  algorithm: true,
+                },
+                Card: {
+                  boxShadow: '0 4px 20px rgba(14,165,160,0.08)',
+                },
+              },
+            }}
+        >
       <BrowserRouter>
           <Routes>
               {/*Mặc định vào Login*/}
@@ -44,6 +66,7 @@ function App() {
               ))}
            </Routes>
       </BrowserRouter>
+      </ConfigProvider>
   );
 }
 
