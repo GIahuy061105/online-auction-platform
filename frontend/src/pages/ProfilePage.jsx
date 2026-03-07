@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Form, Input, Button, Card, Avatar, Typography, message, Spin, Descriptions, Space } from 'antd';
-import { UserOutlined, PhoneOutlined, SaveOutlined, EditOutlined, CloseOutlined, MailOutlined } from '@ant-design/icons';
+import { Form, Input, message, Spin } from 'antd';
+import { UserOutlined, PhoneOutlined, SaveOutlined, EditOutlined, CloseOutlined, MailOutlined, WalletOutlined } from '@ant-design/icons';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import AddressManager from '../components/AddressManager';
+import AppFooter from '../components/Footer';
 
-const { Title } = Typography;
+const formatCurrency = (amount) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
 
 const ProfilePage = () => {
     const [loading, setLoading] = useState(true);
@@ -14,18 +16,12 @@ const ProfilePage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [form] = Form.useForm();
 
-    // Lấy thông tin user
     const fetchProfile = async () => {
         try {
             const response = await api.get('/users/my-profile');
             const userData = response.data;
             setUser(userData);
-
-            // Đổ dữ liệu vào Form (Đã xóa trường address cũ)
-            form.setFieldsValue({
-                fullName: userData.fullName,
-                phoneNumber: userData.phoneNumber,
-            });
+            form.setFieldsValue({ fullName: userData.fullName, phoneNumber: userData.phoneNumber });
         } catch (error) {
             message.error('Lỗi tải thông tin!');
         } finally {
@@ -33,17 +29,14 @@ const ProfilePage = () => {
         }
     };
 
-    useEffect(() => {
-        fetchProfile();
-    }, []);
+    useEffect(() => { fetchProfile(); }, []);
 
-    // Xử lý cập nhật thông tin cá nhân
     const onFinish = async (values) => {
         setSubmitting(true);
         try {
             await api.put('/users/update', values);
             message.success('Cập nhật hồ sơ thành công! 🎉');
-            await fetchProfile(); // Load lại dữ liệu mới
+            await fetchProfile();
             setIsEditing(false);
         } catch (error) {
             message.error('Cập nhật thất bại!');
@@ -52,103 +45,156 @@ const ProfilePage = () => {
         }
     };
 
-    if (loading) return <div style={{ textAlign: 'center', marginTop: 100 }}><Spin size="large" /></div>;
+    const getInitials = (username) => username ? username.slice(0, 2).toUpperCase() : '??';
+
+    if (loading) return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f0fffe', gap: 16 }}>
+            <Spin size="large" />
+            <span style={{ color: '#0ea5a0', fontWeight: 600, fontFamily: 'Be Vietnam Pro, sans-serif' }}>Đang tải hồ sơ...</span>
+        </div>
+    );
 
     return (
-        <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', paddingTop: 80, paddingBottom: 40 }}>
-            <Navbar />
-            <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 20px' }}>
+        <>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
-                {/* 1. KHU VỰC HEADER (Avatar, Tên, Số dư) */}
-                <Card bordered={false} style={{ borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', marginBottom: 20 }}>
-                    <div style={{ textAlign: 'center' }}>
-                        <Avatar size={100} icon={<UserOutlined />} style={{ backgroundColor: '#1890ff', marginBottom: 10 }} />
-                        <Title level={3} style={{ margin: 0 }}>{user?.username}</Title>
-                        <p style={{ color: 'gray' }}><MailOutlined /> {user?.email}</p>
-                        <div style={{ fontSize: 18, fontWeight: 'bold', color: '#cf1322', marginTop: 10 }}>
-                            Số dư ví: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(user?.balance)}
+                .profile-page { min-height: 100vh; background: linear-gradient(180deg,#f0fffe,#f8fffe); padding-top: 68px; font-family: 'Be Vietnam Pro',sans-serif; }
+                .profile-main { max-width: 800px; margin: 0 auto; padding: 28px 20px; display: flex; flex-direction: column; gap: 20px; }
+
+                /* HERO CARD */
+                .profile-hero { background: linear-gradient(135deg,#0a1628 0%,#0d1f36 50%,#0a2a28 100%); border-radius: 20px; padding: 32px; display: flex; align-items: center; gap: 24px; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(10,22,40,0.25); }
+                .profile-hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(14,165,160,0.15) 0%, transparent 70%); border-radius: 50%; }
+                .profile-hero::after { content: ''; position: absolute; bottom: -40px; left: 30%; width: 140px; height: 140px; background: radial-gradient(circle, rgba(14,165,160,0.08) 0%, transparent 70%); border-radius: 50%; }
+
+                .avatar-ring { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg,#0d7a76,#0ea5a0); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: white; flex-shrink: 0; box-shadow: 0 0 0 4px rgba(14,165,160,0.3), 0 8px 24px rgba(14,165,160,0.4); position: relative; z-index: 1; }
+
+                .hero-info { flex: 1; position: relative; z-index: 1; }
+                .hero-username { font-size: 24px; font-weight: 800; color: white; margin: 0 0 4px; }
+                .hero-email { font-size: 14px; color: rgba(255,255,255,0.5); margin: 0 0 16px; display: flex; align-items: center; gap: 6px; }
+
+                .balance-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(14,165,160,0.15); border: 1px solid rgba(14,165,160,0.3); border-radius: 20px; padding: 8px 16px; }
+                .balance-label { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500; }
+                .balance-value { font-size: 18px; font-weight: 800; color: #0ea5a0; }
+
+                /* INFO CARD */
+                .info-card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 2px 16px rgba(14,165,160,0.08); border: 1px solid rgba(14,165,160,0.08); }
+                .card-title { font-size: 16px; font-weight: 700; color: #0d7a76; margin: 0 0 20px; display: flex; align-items: center; gap: 8px; }
+
+                /* VIEW MODE */
+                .info-row { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #f3f4f6; gap: 14px; }
+                .info-row:last-of-type { border-bottom: none; }
+                .info-icon-wrap { width: 40px; height: 40px; border-radius: 10px; background: rgba(14,165,160,0.08); display: flex; align-items: center; justify-content: center; font-size: 16px; color: #0d7a76; flex-shrink: 0; }
+                .info-label { font-size: 12px; color: #9ca3af; font-weight: 500; margin-bottom: 2px; }
+                .info-value { font-size: 15px; font-weight: 600; color: #111827; }
+                .info-empty { font-size: 14px; color: #d1d5db; font-style: italic; font-weight: 400; }
+
+                .edit-btn { display: flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 12px; border: 1.5px solid rgba(14,165,160,0.3); background: white; color: #0d7a76; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Be Vietnam Pro',sans-serif; margin-top: 20px; }
+                .edit-btn:hover { background: #f0fffe; border-color: #0ea5a0; transform: translateY(-1px); }
+
+                /* FORM MODE */
+                .form-title { font-size: 16px; font-weight: 700; color: #0d7a76; margin: 0 0 20px; display: flex; align-items: center; gap: 8px; }
+                .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+
+                .cancel-btn { padding: 10px 20px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; color: #6b7280; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Be Vietnam Pro',sans-serif; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+                .cancel-btn:hover { background: #f9fafb; }
+
+                .save-btn { padding: 10px 24px; border-radius: 10px; border: none; background: linear-gradient(90deg,#0d7a76,#0ea5a0); color: white; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Be Vietnam Pro',sans-serif; transition: all 0.2s; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(14,165,160,0.3); }
+                .save-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14,165,160,0.45); }
+                .save-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+                .ant-input-affix-wrapper { border-radius: 10px !important; border-color: rgba(14,165,160,0.2) !important; height: 44px; }
+                .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper-focused { border-color: #0ea5a0 !important; box-shadow: 0 0 0 2px rgba(14,165,160,0.1) !important; }
+                .ant-form-item-label > label { font-weight: 600; color: #374151; }
+
+                /* ADDRESS SECTION */
+                .address-wrap { border-radius: 20px; overflow: hidden; box-shadow: 0 2px 16px rgba(14,165,160,0.08); border: 1px solid rgba(14,165,160,0.08); }
+            `}</style>
+
+            <div className="profile-page">
+                <Navbar />
+                <div className="profile-main">
+
+                    {/* HERO */}
+                    <div className="profile-hero">
+                        <div className="avatar-ring">{getInitials(user?.username)}</div>
+                        <div className="hero-info">
+                            <h2 className="hero-username">{user?.username}</h2>
+                            <p className="hero-email"><MailOutlined /> {user?.email}</p>
+                            <div className="balance-pill">
+                                <WalletOutlined style={{ color: '#0ea5a0', fontSize: 16 }} />
+                                <div>
+                                    <div className="balance-label">Số dư ví</div>
+                                    <div className="balance-value">{formatCurrency(user?.balance)}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </Card>
 
-                {/* 2. KHU VỰC THÔNG TIN CÁ NHÂN (Xem / Sửa) */}
-                <Card bordered={false} style={{ borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', marginBottom: 20 }}>
-                    {!isEditing ? (
-                        /* --- CHẾ ĐỘ XEM --- */
-                        <>
-                            <Descriptions
-                                title={<span style={{ fontSize: 18 }}><UserOutlined style={{ color: '#1890ff', marginRight: 8 }}/> Thông tin cá nhân</span>}
-                                layout="vertical"
-                                column={1}
-                                bordered
-                            >
-                                <Descriptions.Item label={
-                                    <span style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-                                        <UserOutlined style={{ fontSize: 18, color: '#1890ff', marginRight: 8 }}/>
-                                        Họ và tên
-                                    </span>
-                                }>
-                                    {user?.fullName || <span style={{ color: 'gray', fontStyle: 'italic' }}>(Chưa cập nhật)</span>}
-                                </Descriptions.Item>
+                    {/* INFO CARD */}
+                    <div className="info-card">
+                        {!isEditing ? (
+                            <>
+                                <h3 className="card-title"><UserOutlined /> Thông tin cá nhân</h3>
 
-                                <Descriptions.Item label={
-                                    <span style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-                                        <PhoneOutlined style={{ fontSize: 18, color: '#1890ff', marginRight: 8 }}/>
-                                        Số điện thoại
-                                    </span>
-                                }>
-                                    {user?.phoneNumber || <span style={{ color: 'gray', fontStyle: 'italic' }}>(Chưa cập nhật)</span>}
-                                </Descriptions.Item>
-                            </Descriptions>
+                                <div className="info-row">
+                                    <div className="info-icon-wrap"><UserOutlined /></div>
+                                    <div>
+                                        <div className="info-label">Họ và tên</div>
+                                        <div className="info-value">
+                                            {user?.fullName || <span className="info-empty">Chưa cập nhật</span>}
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <div style={{ marginTop: 20, textAlign: 'center' }}>
-                                <Button type="primary" ghost icon={<EditOutlined />} size="large" onClick={() => setIsEditing(true)}>
-                                    Chỉnh sửa thông tin
-                                </Button>
-                            </div>
-                        </>
-                    ) : (
-                        /* --- CHẾ ĐỘ SỬA --- */
-                        <Form form={form} layout="vertical" onFinish={onFinish} size="large">
-                            <Title level={4} style={{ marginBottom: 20, color: '#1890ff' }}><EditOutlined /> Cập nhật thông tin</Title>
+                                <div className="info-row">
+                                    <div className="info-icon-wrap"><PhoneOutlined /></div>
+                                    <div>
+                                        <div className="info-label">Số điện thoại</div>
+                                        <div className="info-value">
+                                            {user?.phoneNumber || <span className="info-empty">Chưa cập nhật</span>}
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <Form.Item
-                                name="fullName"
-                                label={<span style={{ fontWeight: 'bold' }}>Họ và tên</span>}
-                                rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
-                            >
-                                <Input prefix={<UserOutlined style={{ color: '#1890ff' }}/>} placeholder="Nhập họ tên đầy đủ" />
-                            </Form.Item>
+                                <button className="edit-btn" onClick={() => setIsEditing(true)}>
+                                    <EditOutlined /> Chỉnh sửa thông tin
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="form-title"><EditOutlined /> Cập nhật thông tin</h3>
+                                <Form form={form} layout="vertical" onFinish={onFinish}>
+                                    <Form.Item name="fullName" label="Họ và tên"
+                                        rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}>
+                                        <Input prefix={<UserOutlined style={{ color: '#0ea5a0' }} />} placeholder="Nhập họ tên đầy đủ" size="large" />
+                                    </Form.Item>
+                                    <Form.Item name="phoneNumber" label="Số điện thoại"
+                                        rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}>
+                                        <Input prefix={<PhoneOutlined style={{ color: '#0ea5a0' }} />} placeholder="Nhập số điện thoại" size="large" />
+                                    </Form.Item>
+                                    <div className="form-actions">
+                                        <button type="button" className="cancel-btn" onClick={() => setIsEditing(false)}>
+                                            <CloseOutlined /> Hủy bỏ
+                                        </button>
+                                        <button type="submit" className="save-btn" disabled={submitting}>
+                                            <SaveOutlined /> {submitting ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                        </button>
+                                    </div>
+                                </Form>
+                            </>
+                        )}
+                    </div>
 
-                            <Form.Item
-                                name="phoneNumber"
-                                label={<span style={{ fontWeight: 'bold' }}>Số điện thoại</span>}
-                                rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}
-                            >
-                                <Input prefix={<PhoneOutlined style={{ color: '#1890ff' }}/>} placeholder="Nhập số điện thoại" />
-                            </Form.Item>
+                    {/* ADDRESS MANAGER */}
+                    <div className="address-wrap">
+                        <AddressManager />
+                    </div>
 
-                            <Form.Item style={{ marginTop: 30, marginBottom: 0 }}>
-                                <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                                    <Button type="default" icon={<CloseOutlined />} onClick={() => setIsEditing(false)}>
-                                        Hủy bỏ
-                                    </Button>
-                                    <Button type="primary" htmlType="submit" loading={submitting} icon={<SaveOutlined />}>
-                                        Lưu thay đổi
-                                    </Button>
-                                </Space>
-                            </Form.Item>
-                        </Form>
-                    )}
-                </Card>
-
-                {/* 3. KHU VỰC SỔ ĐỊA CHỈ (Độc lập hoàn toàn) */}
-                <div style={{ borderRadius: 10, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                    <AddressManager />
                 </div>
-
+                <AppFooter />
             </div>
-        </div>
+        </>
     );
 };
 
