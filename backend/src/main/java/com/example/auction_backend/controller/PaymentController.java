@@ -31,23 +31,19 @@ public class PaymentController {
     private final VNPayConfig vnPayConfig;
     // Bước 1: Tạo link VNPay
     @PostMapping("/create")
-    public ResponseEntity<String> createPayment(
-            @RequestParam long amount,
-            HttpServletRequest request) throws Exception {
-        System.out.println("=== VNPAY DEBUG ===");
-        System.out.println("TmnCode: [" + vnPayConfig.getTmnCode() + "]");
-        System.out.println("HashSecret length: " + vnPayConfig.getHashSecret().length());
-        System.out.println("IP: " + getClientIp(request));
-        System.out.println("Amount: " + amount);
-        System.out.println("===================");
+    public ResponseEntity<String> createPayment(@RequestParam long amount, HttpServletRequest request) throws Exception {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        // CHỨC NĂNG 2: Kiểm tra hồ sơ trước khi nạp tiền/đấu giá
+        if (user.getFullName() == null || user.getPhoneNumber() == null) {
+            return ResponseEntity.badRequest().body("Vui lòng cập nhật Họ tên và SĐT trong hồ sơ trước!");
+        }
+
         String txnRef = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String ipAddr = getClientIp(request);
 
-        // Lưu giao dịch PENDING
         transactionRepository.save(PaymentTransaction.builder()
                 .txnRef(txnRef)
                 .user(user)
@@ -56,8 +52,7 @@ public class PaymentController {
                 .createdAt(LocalDateTime.now())
                 .build());
 
-        String paymentUrl = vnPayService.createPaymentUrl(amount, txnRef, ipAddr);
-        return ResponseEntity.ok(paymentUrl);
+        return ResponseEntity.ok(vnPayService.createPaymentUrl(amount, txnRef, ipAddr));
     }
 
     // Bước 2: VNPay callback
