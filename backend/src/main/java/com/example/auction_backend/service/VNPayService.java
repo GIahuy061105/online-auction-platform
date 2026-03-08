@@ -53,6 +53,12 @@ public class VNPayService {
         String secureHash = hmacSHA512(config.getHashSecret(), hashStr);
         System.out.println("HashStr: " + hashStr);
         System.out.println("SecureHash: " + secureHash);
+        System.out.println("=== HASH DEBUG ===");
+        System.out.println("HashStr raw: [" + hashStr + "]");
+        System.out.println("HashSecret: [" + config.getHashSecret() + "]");
+        System.out.println("HashSecret bytes: " + config.getHashSecret().getBytes(StandardCharsets.UTF_8).length);
+        System.out.println("SecureHash: " + secureHash);
+        System.out.println("==================");
         return config.getVnpUrl() + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
     }
 
@@ -76,8 +82,11 @@ public class VNPayService {
         Mac mac = Mac.getInstance("HmacSHA512");
         mac.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA512"));
         byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hash) sb.append(String.format("%02x", b));
+        StringBuilder sb = new StringBuilder(128);
+        for (byte b : hash) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        System.out.println("Hash length: " + sb.length());
         return sb.toString();
     }
 }
