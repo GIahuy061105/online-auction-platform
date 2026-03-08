@@ -37,11 +37,15 @@ public class VNPayService {
             Map.Entry<String, String> entry = itr.next();
             String key = entry.getKey();
             String value = entry.getValue();
+
+            // Sử dụng !value.isEmpty() theo gợi ý của Huy
             if (value != null && !value.isEmpty()) {
+                // Sử dụng StandardCharsets.US_ASCII theo gợi ý của Huy
                 query.append(URLEncoder.encode(key, StandardCharsets.US_ASCII));
                 query.append('=');
-                query.append(URLEncoder.encode(value, StandardCharsets.US_ASCII)
-                        .replace("+", "%20"));
+                // QUAN TRỌNG: VNPay yêu cầu %20 thay vì +
+                query.append(URLEncoder.encode(value, StandardCharsets.US_ASCII).replace("+", "%20"));
+
                 if (itr.hasNext()) {
                     query.append('&');
                 }
@@ -49,6 +53,7 @@ public class VNPayService {
         }
 
         String queryUrl = query.toString();
+        // Bắt buộc tính Hash trên chuỗi đã Encode
         String vnp_SecureHash = hmacSHA512(config.getHashSecret(), queryUrl);
 
         return config.getVnpUrl() + "?" + queryUrl + "&vnp_SecureHash=" + vnp_SecureHash;
