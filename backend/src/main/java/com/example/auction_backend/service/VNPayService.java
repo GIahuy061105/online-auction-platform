@@ -61,10 +61,7 @@ public class VNPayService {
             String value = entry.getValue();
 
             if (value != null && !value.isEmpty()) {
-                hashData.append(URLEncoder.encode(key, StandardCharsets.US_ASCII));
-                hashData.append('=');
-                hashData.append(URLEncoder.encode(value, StandardCharsets.US_ASCII).replace("+", "%20"));
-                hashData.append('&');
+                hashData.append(key).append('=').append(value).append('&');
             }
         }
 
@@ -72,10 +69,10 @@ public class VNPayService {
             hashData.deleteCharAt(hashData.length() - 1);
         }
         String checkHash = hmacSHA512(config.getHashSecret(), hashData.toString());
-        System.out.println("--- DEBUG VERIFY ---");
-        System.out.println("Raw Hash Data: " + hashData.toString());
-        System.out.println("Calculated Hash: " + checkHash);
-        System.out.println("Expected Hash: " + vnp_SecureHash);
+        System.out.println("--- NEW DEBUG VERIFY ---");
+        System.out.println("Raw Data (No Encode): " + hashData.toString());
+        System.out.println("Calculated: " + checkHash);
+        System.out.println("Expected  : " + vnp_SecureHash);
 
         return checkHash.equalsIgnoreCase(vnp_SecureHash);
     }
