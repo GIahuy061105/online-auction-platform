@@ -11,6 +11,7 @@ import MyStorePage from './pages/MyStorePage';
 import MyWishListPage from './pages/MyWishListPage';
 import InfoPage from './pages/InfoPage';
 import ContactPage from './pages/ContactPage';
+import DepositPage from './pages/DepositPage';
 import {INFO_ROUTES_DATA} from './components/InfoRoutes';
 const { Title, Paragraph, Text } = Typography;
 function App() {
@@ -56,6 +57,8 @@ function App() {
               <Route path="/my-store" element={<MyStorePage />} />
               {/*Route xem danh sách sản phẩm yêu thích */}
               <Route path="/my-wishlist" element={<MyWishListPage />} />
+              {/*Route xem trang nạp tiền */}
+              <Route path="/deposit" element={<DepositPage />} />
               <Route path="/users/contact" element={<ContactPage />} />
               {INFO_ROUTES_DATA.map((item) => (
                                 <Route
