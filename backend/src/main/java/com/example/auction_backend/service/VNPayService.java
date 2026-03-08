@@ -1,8 +1,10 @@
+// service/VNPayService.java
 package com.example.auction_backend.service;
 
 import com.example.auction_backend.config.VNPayConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.URLEncoder;
@@ -17,83 +19,58 @@ public class VNPayService {
     private final VNPayConfig config;
 
     public String createPaymentUrl(long amount, String txnRef, String ipAddr) throws Exception {
-        Map<String, String> vnp_Params = new TreeMap<>();
-        vnp_Params.put("vnp_Version", "2.1.0");
-        vnp_Params.put("vnp_Command", "pay");
-        vnp_Params.put("vnp_TmnCode", config.getTmnCode());
-        vnp_Params.put("vnp_Amount", String.valueOf(amount * 100));
-        vnp_Params.put("vnp_CurrCode", "VND");
-        vnp_Params.put("vnp_TxnRef", txnRef);
-        vnp_Params.put("vnp_OrderInfo", "Nap tien SDKAuction " + txnRef);
-        vnp_Params.put("vnp_OrderType", "other");
-        vnp_Params.put("vnp_Locale", "vn");
-        vnp_Params.put("vnp_ReturnUrl", config.getReturnUrl());
-        vnp_Params.put("vnp_IpAddr", ipAddr);
-        vnp_Params.put("vnp_CreateDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+        Map<String, String> params = new TreeMap<>();
+        params.put("vnp_Version", "2.1.0");
+        params.put("vnp_Command", "pay");
+        params.put("vnp_TmnCode", config.getTmnCode());
+        params.put("vnp_Amount", String.valueOf(amount * 100));
+        params.put("vnp_CurrCode", "VND");
+        params.put("vnp_TxnRef", txnRef);
+        params.put("vnp_OrderInfo", "Nap tien SDKAuction " + txnRef);
+        params.put("vnp_OrderType", "other");
+        params.put("vnp_Locale", "vn");
+        params.put("vnp_ReturnUrl", config.getReturnUrl());
+        params.put("vnp_IpAddr", ipAddr);
+        params.put("vnp_CreateDate",
+                new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 
+        StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
-        Iterator<Map.Entry<String, String>> itr = vnp_Params.entrySet().iterator();
-        while (itr.hasNext()) {
-            Map.Entry<String, String> entry = itr.next();
-            String key = entry.getKey();
-            String value = entry.getValue();
-
-            // Sử dụng !value.isEmpty() theo gợi ý của Huy
-            if (value != null && !value.isEmpty()) {
-                // Sử dụng StandardCharsets.US_ASCII theo gợi ý của Huy
-                query.append(URLEncoder.encode(key, StandardCharsets.US_ASCII));
-                query.append('=');
-                // QUAN TRỌNG: VNPay yêu cầu %20 thay vì +
-                query.append(URLEncoder.encode(value, StandardCharsets.US_ASCII).replace("+", "%20"));
-
-                if (itr.hasNext()) {
-                    query.append('&');
-                }
-            }
+        for (Map.Entry<String, String> e : params.entrySet()) {
+            String encKey = URLEncoder.encode(e.getKey(), StandardCharsets.US_ASCII);
+            String encVal = URLEncoder.encode(e.getValue(), StandardCharsets.US_ASCII);
+            hashData.append(e.getKey()).append('=').append(encVal).append('&');
+            query.append(encKey).append('=').append(encVal).append('&');
         }
+        String hashStr = hashData.substring(0, hashData.length() - 1);
+        String queryStr = query.substring(0, query.length() - 1);
 
-        String queryUrl = query.toString();
-        // Bắt buộc tính Hash trên chuỗi đã Encode
-        String vnp_SecureHash = hmacSHA512(config.getHashSecret(), queryUrl);
-
-        return config.getVnpUrl() + "?" + queryUrl + "&vnp_SecureHash=" + vnp_SecureHash;
+        String secureHash = hmacSHA512(config.getHashSecret(), hashStr);
+        return config.getVnpUrl() + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
     }
 
     public boolean verifyReturn(Map<String, String> params) throws Exception {
-        String vnp_SecureHash = params.get("vnp_SecureHash");
-        params.remove("vnp_SecureHash");
-        params.remove("vnp_SecureHashType");
+        String receivedHash = params.get("vnp_SecureHash");
+        Map<String, String> filtered = new TreeMap<>(params);
+        filtered.remove("vnp_SecureHash");
+        filtered.remove("vnp_SecureHashType");
 
-        Map<String, String> sortedParams = new TreeMap<>(params);
-        StringBuilder hashData = new StringBuilder();
-
-        Iterator<Map.Entry<String, String>> itr = sortedParams.entrySet().iterator();
-        while (itr.hasNext()) {
-            Map.Entry<String, String> entry = itr.next();
-            String key = entry.getKey();
-            String value = entry.getValue();
-            if (value != null && !value.isEmpty()) {
-                hashData.append(URLEncoder.encode(key, StandardCharsets.US_ASCII));
-                hashData.append('=');
-                hashData.append(URLEncoder.encode(value, StandardCharsets.US_ASCII)
-                        .replace("+", "%20"));
-                if (itr.hasNext()) {
-                    hashData.append('&');
-                }
-            }
+        StringBuilder data = new StringBuilder();
+        for (Map.Entry<String, String> e : filtered.entrySet()) {
+            data.append(e.getKey()).append('=')
+                    .append(URLEncoder.encode(e.getValue(), StandardCharsets.US_ASCII))
+                    .append('&');
         }
-
-        String checkHash = hmacSHA512(config.getHashSecret(), hashData.toString());
-        return checkHash.equalsIgnoreCase(vnp_SecureHash);
+        String dataStr = data.substring(0, data.length() - 1);
+        return hmacSHA512(config.getHashSecret(), dataStr).equalsIgnoreCase(receivedHash);
     }
 
     private String hmacSHA512(String key, String data) throws Exception {
-        Mac hmac512 = Mac.getInstance("HmacSHA512");
-        SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
-        hmac512.init(secretKey);
-        byte[] result = hmac512.doFinal(data.getBytes(StandardCharsets.UTF_8));
+        Mac mac = Mac.getInstance("HmacSHA512");
+        mac.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA512"));
+        byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         StringBuilder sb = new StringBuilder();
-        for (byte b : result) sb.append(String.format("%02x", b & 0xff));
+        for (byte b : hash) sb.append(String.format("%02x", b));
         return sb.toString();
     }
 }
