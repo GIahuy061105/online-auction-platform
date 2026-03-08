@@ -56,6 +56,7 @@ public class PaymentController {
     }
 
     // Bước 2: VNPay callback
+    @GetMapping("/vnpay-return")
     public void vnpayReturn(@RequestParam Map<String, String> params, HttpServletResponse response) {
         try {
             boolean valid = vnPayService.verifyReturn(params);
