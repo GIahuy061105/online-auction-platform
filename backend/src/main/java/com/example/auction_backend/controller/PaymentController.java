@@ -1,6 +1,7 @@
 // controller/PaymentController.java
 package com.example.auction_backend.controller;
 
+import com.example.auction_backend.config.VNPayConfig;
 import com.example.auction_backend.model.PaymentTransaction;
 import com.example.auction_backend.model.User;
 import com.example.auction_backend.repository.PaymentTransactionRepository;
@@ -27,13 +28,18 @@ public class PaymentController {
     private final VNPayService vnPayService;
     private final UserRepository userRepository;
     private final PaymentTransactionRepository transactionRepository;
-
+    private final VNPayConfig vnPayConfig;
     // Bước 1: Tạo link VNPay
     @PostMapping("/create")
     public ResponseEntity<String> createPayment(
             @RequestParam long amount,
             HttpServletRequest request) throws Exception {
-
+        System.out.println("=== VNPAY DEBUG ===");
+        System.out.println("TmnCode: [" + vnPayConfig.getTmnCode() + "]");
+        System.out.println("HashSecret length: " + vnPayConfig.getHashSecret().length());
+        System.out.println("IP: " + getClientIp(request));
+        System.out.println("Amount: " + amount);
+        System.out.println("===================");
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
