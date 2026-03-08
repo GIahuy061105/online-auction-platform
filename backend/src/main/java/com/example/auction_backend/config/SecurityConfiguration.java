@@ -34,7 +34,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Cho phép Swagger
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/payment/vnpay-return").permitAll()
+                        .requestMatchers("/api/payment/**").permitAll()
                         .requestMatchers("/api/wishlists/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/**").permitAll()
                         .anyRequest().authenticated() // Còn lại phải có Token
@@ -51,7 +51,7 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173","https://sdkauction.vercel.app"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173","https://sdkauction.vercel.app","https://sandbox.vnpayment.vn"));
         configuration.setAllowCredentials(true);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Cho phép mọi method
         configuration.setAllowedHeaders(List.of("*")); // Cho phép mọi header
