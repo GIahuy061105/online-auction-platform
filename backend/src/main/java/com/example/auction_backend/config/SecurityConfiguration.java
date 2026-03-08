@@ -42,6 +42,7 @@ public class SecurityConfiguration {
                                 "/api/auctions/search"
                         ).permitAll()
                         .requestMatchers("/api/wishlists/**").authenticated()
+                        .requestMatchers("/api/ping").permitAll()
                         .anyRequest().authenticated() // Còn lại phải có Token
                 )
                 .sessionManagement(session -> session
