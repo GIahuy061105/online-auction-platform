@@ -19,38 +19,38 @@ public class VNPayService {
     private final VNPayConfig config;
 
     public String createPaymentUrl(long amount, String txnRef, String ipAddr) throws Exception {
-
-        String tmnCode = "F0AKV2SN";
-        String hashSecret = "2V3BDX99PUVUQ0GQGM4QL6ZZ6R3CFIWM";
-        String returnUrl = "https://sdkauction.up.railway.app/api/payment/vnpay-return";
-
         Map<String, String> params = new TreeMap<>();
         params.put("vnp_Version", "2.1.0");
         params.put("vnp_Command", "pay");
-        params.put("vnp_TmnCode", tmnCode);
+        params.put("vnp_TmnCode",  config.getTmnCode());
         params.put("vnp_Amount", String.valueOf(amount * 100));
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", txnRef);
         params.put("vnp_OrderInfo", "Nap tien SDKAuction " + txnRef);
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", "vn");
-        params.put("vnp_ReturnUrl", returnUrl);
+        params.put("vnp_ReturnUrl", config.getReturnUrl());
         params.put("vnp_IpAddr", ipAddr);
         params.put("vnp_CreateDate",
                 new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 
         StringBuilder hashData = new StringBuilder();
-        StringBuilder query = new StringBuilder();
-        for (Map.Entry<String, String> e : params.entrySet()) {
-            String encKey = URLEncoder.encode(e.getKey(), StandardCharsets.US_ASCII);
-            String encVal = URLEncoder.encode(e.getValue(), StandardCharsets.US_ASCII);
-            hashData.append(e.getKey()).append('=').append(encVal).append('&');
-            query.append(encKey).append('=').append(encVal).append('&');
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            hashData.append(entry.getKey()).append('=')
+                    .append(entry.getValue()).append('&');
         }
         String hashStr = hashData.substring(0, hashData.length() - 1);
+
+        StringBuilder query = new StringBuilder();
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            query.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8))
+                    .append('=')
+                    .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
+                    .append('&');
+        }
         String queryStr = query.substring(0, query.length() - 1);
 
-        String secureHash = hmacSHA512(hashSecret, hashStr);
+        String secureHash = hmacSHA512(config.getHashSecret(), hashStr);
         System.out.println("HashStr: " + hashStr);
         System.out.println("SecureHash: " + secureHash);
         return config.getVnpUrl() + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
