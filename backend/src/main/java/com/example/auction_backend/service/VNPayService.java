@@ -19,17 +19,22 @@ public class VNPayService {
     private final VNPayConfig config;
 
     public String createPaymentUrl(long amount, String txnRef, String ipAddr) throws Exception {
+
+        String tmnCode = "F0AKV2SN";
+        String hashSecret = "2V3BDX99PUVUQ0GQGM4QL6ZZ6R3CFIWM";
+        String returnUrl = "https://sdkauction.up.railway.app/api/payment/vnpay-return";
+
         Map<String, String> params = new TreeMap<>();
         params.put("vnp_Version", "2.1.0");
         params.put("vnp_Command", "pay");
-        params.put("vnp_TmnCode", config.getTmnCode());
+        params.put("vnp_TmnCode", tmnCode);
         params.put("vnp_Amount", String.valueOf(amount * 100));
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", txnRef);
         params.put("vnp_OrderInfo", "Nap tien SDKAuction " + txnRef);
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", "vn");
-        params.put("vnp_ReturnUrl", config.getReturnUrl());
+        params.put("vnp_ReturnUrl", returnUrl);
         params.put("vnp_IpAddr", ipAddr);
         params.put("vnp_CreateDate",
                 new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
@@ -45,7 +50,9 @@ public class VNPayService {
         String hashStr = hashData.substring(0, hashData.length() - 1);
         String queryStr = query.substring(0, query.length() - 1);
 
-        String secureHash = hmacSHA512(config.getHashSecret(), hashStr);
+        String secureHash = hmacSHA512(hashSecret, hashStr);
+        System.out.println("HashStr: " + hashStr);
+        System.out.println("SecureHash: " + secureHash);
         return config.getVnpUrl() + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
     }
 
