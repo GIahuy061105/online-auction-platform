@@ -13,6 +13,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class VNPayService {
+
     private final VNPayConfig config;
 
     public String createPaymentUrl(long amount, String txnRef, String ipAddr) throws Exception {
@@ -30,27 +31,26 @@ public class VNPayService {
         vnp_Params.put("vnp_IpAddr", ipAddr);
         vnp_Params.put("vnp_CreateDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
 
-        StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
         Iterator<Map.Entry<String, String>> itr = vnp_Params.entrySet().iterator();
-
         while (itr.hasNext()) {
             Map.Entry<String, String> entry = itr.next();
-            String fieldName = entry.getKey();
-            String fieldValue = entry.getValue();
-
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII)).append('&');
-                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII)).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII)).append('&');
-            }
-            if (itr.hasNext()) {
-                query.append("&");
-                hashData.append("&");
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (value != null && !value.isEmpty()) {
+                query.append(URLEncoder.encode(key, StandardCharsets.US_ASCII));
+                query.append('=');
+                query.append(URLEncoder.encode(value, StandardCharsets.US_ASCII)
+                        .replace("+", "%20"));
+                if (itr.hasNext()) {
+                    query.append('&');
+                }
             }
         }
 
         String queryUrl = query.toString();
-        String vnp_SecureHash = hmacSHA512(config.getHashSecret(), hashData.toString());
+        String vnp_SecureHash = hmacSHA512(config.getHashSecret(), queryUrl);
+
         return config.getVnpUrl() + "?" + queryUrl + "&vnp_SecureHash=" + vnp_SecureHash;
     }
 
@@ -62,12 +62,21 @@ public class VNPayService {
         Map<String, String> sortedParams = new TreeMap<>(params);
         StringBuilder hashData = new StringBuilder();
 
-        for (Map.Entry<String, String> entry : sortedParams.entrySet()) {
-            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-                hashData.append(entry.getKey()).append('=').append(URLEncoder.encode(entry.getValue(), StandardCharsets.US_ASCII)).append('&');
+        Iterator<Map.Entry<String, String>> itr = sortedParams.entrySet().iterator();
+        while (itr.hasNext()) {
+            Map.Entry<String, String> entry = itr.next();
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (value != null && !value.isEmpty()) {
+                hashData.append(URLEncoder.encode(key, StandardCharsets.US_ASCII));
+                hashData.append('=');
+                hashData.append(URLEncoder.encode(value, StandardCharsets.US_ASCII)
+                        .replace("+", "%20"));
+                if (itr.hasNext()) {
+                    hashData.append('&');
+                }
             }
         }
-        if (hashData.length() > 0) hashData.deleteCharAt(hashData.length() - 1);
 
         String checkHash = hmacSHA512(config.getHashSecret(), hashData.toString());
         return checkHash.equalsIgnoreCase(vnp_SecureHash);
