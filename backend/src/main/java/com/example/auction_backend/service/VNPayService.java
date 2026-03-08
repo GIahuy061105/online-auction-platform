@@ -58,7 +58,10 @@ public class VNPayService {
         StringBuilder hashData = new StringBuilder();
         for (Map.Entry<String, String> entry : sortedParams.entrySet()) {
             if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-                hashData.append(entry.getKey()).append('=').append(entry.getValue()).append('&');
+                hashData.append(entry.getKey()).append('=');
+                hashData.append(URLEncoder.encode(entry.getValue(), StandardCharsets.US_ASCII)
+                        .replace("+", "%20"));
+                hashData.append('&');
             }
         }
         if (!hashData.isEmpty()) hashData.deleteCharAt(hashData.length() - 1);
