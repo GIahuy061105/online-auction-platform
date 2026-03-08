@@ -39,7 +39,7 @@ public class PaymentController {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String txnRef = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        String ipAddr = request.getRemoteAddr();
+        String ipAddr = getClientIp(request);
 
         // Lưu giao dịch PENDING
         transactionRepository.save(PaymentTransaction.builder()
@@ -86,5 +86,24 @@ public class PaymentController {
             }
             response.sendRedirect("https://sdkauction.vercel.app/deposit?status=failed");
         }
+    }
+    private String getClientIp(HttpServletRequest request) {
+        String[] headers = {
+                "X-Forwarded-For",
+                "X-Real-IP",
+                "Proxy-Client-IP",
+                "WL-Proxy-Client-IP"
+        };
+        for (String header : headers) {
+            String ip = request.getHeader(header);
+            if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+                return ip.split(",")[0].trim();
+            }
+        }
+        String ip = request.getRemoteAddr();
+        if ("127.0.0.1".equals(ip) || "0:0:0:0:0:0:0:1".equals(ip)) {
+            return "1.1.1.1";
+        }
+        return ip;
     }
 }
