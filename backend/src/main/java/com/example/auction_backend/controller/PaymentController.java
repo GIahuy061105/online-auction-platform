@@ -63,6 +63,7 @@ public class PaymentController {
             String responseCode = params.get("vnp_ResponseCode");
             String txnRef = params.get("vnp_TxnRef");
 
+            System.out.println("DEBUG VNPAY: Valid=" + valid + " | ResponseCode=" + responseCode + " | TxnRef=" + txnRef);
             PaymentTransaction tx = transactionRepository.findById(txnRef).orElse(null);
 
             if (valid && "00".equals(responseCode) && tx != null && "PENDING".equals(tx.getStatus())) {
@@ -75,6 +76,8 @@ public class PaymentController {
 
                 response.sendRedirect("https://sdkauction.vercel.app/deposit?status=success");
             } else {
+                if (!valid) System.out.println("Lỗi: Chữ ký không hợp lệ!");
+                if (tx == null) System.out.println("Lỗi: Không tìm thấy giao dịch " + txnRef);
                 response.sendRedirect("https://sdkauction.vercel.app/deposit?status=failed");
             }
         } catch (Exception e) {

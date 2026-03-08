@@ -64,9 +64,12 @@ public class VNPayService {
                 hashData.append('&');
             }
         }
-        if (!hashData.isEmpty()) hashData.deleteCharAt(hashData.length() - 1);
-
-        return hmacSHA512(config.getHashSecret(), hashData.toString()).equalsIgnoreCase(vnp_SecureHash);
+        if (!hashData.isEmpty()) {
+            hashData.deleteCharAt(hashData.length() - 1);
+            if (!hashData.isEmpty()) hashData.deleteCharAt(hashData.length() - 1);
+        }
+        String checkHash = hmacSHA512(config.getHashSecret(), hashData.toString());
+        return checkHash.equalsIgnoreCase(vnp_SecureHash);
     }
 
     private String hmacSHA512(String key, String data) throws Exception {
