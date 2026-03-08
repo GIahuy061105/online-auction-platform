@@ -50,19 +50,20 @@ public class VNPayService {
     }
 
     public boolean verifyReturn(Map<String, String> params) throws Exception {
-        String receivedHash = params.get("vnp_SecureHash");
-        Map<String, String> filtered = new TreeMap<>(params);
-        filtered.remove("vnp_SecureHash");
-        filtered.remove("vnp_SecureHashType");
+        String vnp_SecureHash = params.get("vnp_SecureHash");
+        Map<String, String> sortedParams = new TreeMap<>(params);
+        sortedParams.remove("vnp_SecureHash");
+        sortedParams.remove("vnp_SecureHashType");
 
-        StringBuilder data = new StringBuilder();
-        for (Map.Entry<String, String> e : filtered.entrySet()) {
-            data.append(e.getKey()).append('=')
-                    .append(URLEncoder.encode(e.getValue(), StandardCharsets.US_ASCII))
-                    .append('&');
+        StringBuilder hashData = new StringBuilder();
+        for (Map.Entry<String, String> entry : sortedParams.entrySet()) {
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                hashData.append(entry.getKey()).append('=').append(entry.getValue()).append('&');
+            }
         }
-        String dataStr = data.substring(0, data.length() - 1);
-        return hmacSHA512(config.getHashSecret(), dataStr).equalsIgnoreCase(receivedHash);
+        if (!hashData.isEmpty()) hashData.deleteCharAt(hashData.length() - 1);
+
+        return hmacSHA512(config.getHashSecret(), hashData.toString()).equalsIgnoreCase(vnp_SecureHash);
     }
 
     private String hmacSHA512(String key, String data) throws Exception {

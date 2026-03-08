@@ -56,36 +56,29 @@ public class PaymentController {
     }
 
     // Bước 2: VNPay callback
-    @GetMapping("/vnpay-return")
-    public void vnpayReturn(
-            @RequestParam Map<String, String> params,
-            HttpServletResponse response) throws Exception {
+    public void vnpayReturn(@RequestParam Map<String, String> params, HttpServletResponse response) {
+        try {
+            boolean valid = vnPayService.verifyReturn(params);
+            String responseCode = params.get("vnp_ResponseCode");
+            String txnRef = params.get("vnp_TxnRef");
 
-        boolean valid = vnPayService.verifyReturn(params);
-        String responseCode = params.get("vnp_ResponseCode");
-        String txnRef = params.get("vnp_TxnRef");
+            PaymentTransaction tx = transactionRepository.findById(txnRef).orElse(null);
 
-        PaymentTransaction tx = transactionRepository.findById(txnRef).orElse(null);
+            if (valid && "00".equals(responseCode) && tx != null && "PENDING".equals(tx.getStatus())) {
+                User user = tx.getUser();
+                user.setBalance(user.getBalance().add(tx.getAmount()));
+                userRepository.save(user);
 
-        if (valid && "00".equals(responseCode) && tx != null && "PENDING".equals(tx.getStatus())) {
-            // Cộng tiền vào ví
-            User user = tx.getUser();
-            user.setBalance(user.getBalance().add(tx.getAmount()));
-            userRepository.save(user);
-
-            // Cập nhật trạng thái giao dịch
-            tx.setStatus("SUCCESS");
-            transactionRepository.save(tx);
-
-            response.sendRedirect(
-                    "https://sdkauction.vercel.app/deposit?status=success&amount=" + tx.getAmount()
-            );
-        } else {
-            if (tx != null) {
-                tx.setStatus("FAILED");
+                tx.setStatus("SUCCESS");
                 transactionRepository.save(tx);
+
+                response.sendRedirect("https://sdkauction.vercel.app/deposit?status=success");
+            } else {
+                response.sendRedirect("https://sdkauction.vercel.app/deposit?status=failed");
             }
-            response.sendRedirect("https://sdkauction.vercel.app/deposit?status=failed");
+        } catch (Exception e) {
+            e.printStackTrace();
+            try { response.sendRedirect("https://sdkauction.vercel.app/deposit?status=error"); } catch (Exception ignored) {}
         }
     }
     private String getClientIp(HttpServletRequest request) {
