@@ -145,7 +145,7 @@ const RegisterPage = () => {
 
                 .auth-right {
                     width: 500px;
-                    background: #0a1628;
+                    background: #ffffff;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
@@ -160,18 +160,18 @@ const RegisterPage = () => {
                 .auth-form-title {
                     font-size: 30px;
                     font-weight: 800;
-                    color: white;
+                    color: #111827;
                     margin: 0 0 8px 0;
                     letter-spacing: -0.5px;
                 }
 
                 .auth-form-subtitle {
-                    color: rgba(255,255,255,0.45);
+                    color: #6b7280;
                     font-size: 15px;
                 }
 
                 .auth-input-label {
-                    color: rgba(255,255,255,0.7);
+                    color: #374151;
                     font-size: 13px;
                     font-weight: 600;
                     letter-spacing: 0.5px;
@@ -183,10 +183,10 @@ const RegisterPage = () => {
                 .auth-input .ant-input,
                 .auth-input .ant-input-password,
                 .auth-input .ant-input-affix-wrapper {
-                    background: rgba(255,255,255,0.06) !important;
-                    border: 1.5px solid rgba(255,255,255,0.1) !important;
+                    background: #f9fafb !important;
+                    border: 1.5px solid #e5e7eb !important;
                     border-radius: 10px !important;
-                    color: white !important;
+                    color: #111827 !important;
                     height: 50px;
                     font-size: 15px;
                     transition: all 0.3s !important;
@@ -195,16 +195,17 @@ const RegisterPage = () => {
                 .auth-input .ant-input-affix-wrapper:hover,
                 .auth-input .ant-input-affix-wrapper:focus-within {
                     border-color: #0ea5a0 !important;
-                    background: rgba(14,165,160,0.08) !important;
+                    background: #f0fffe !important;
                     box-shadow: 0 0 0 3px rgba(14,165,160,0.15) !important;
                 }
 
-                .auth-input .ant-input::placeholder {
-                    color: rgba(255,255,255,0.25) !important;
+                .auth-input .ant-input::placeholder,
+                .auth-input .ant-input-affix-wrapper input::placeholder {
+                    color: #9ca3af !important;
                 }
 
                 .auth-input .anticon {
-                    color: rgba(255,255,255,0.35) !important;
+                    color: #9ca3af !important;
                 }
 
                 .auth-submit-btn {
@@ -243,17 +244,17 @@ const RegisterPage = () => {
                 .auth-divider-line {
                     flex: 1;
                     height: 1px;
-                    background: rgba(255,255,255,0.08);
+                    background: #e5e7eb;
                 }
 
                 .auth-divider-text {
-                    color: rgba(255,255,255,0.3);
+                    color: #9ca3af;
                     font-size: 13px;
                 }
 
                 .auth-login-link {
                     text-align: center;
-                    color: rgba(255,255,255,0.45);
+                    color: #6b7280;
                     font-size: 14px;
                 }
 
@@ -264,7 +265,7 @@ const RegisterPage = () => {
                     margin-left: 6px;
                 }
 
-                .auth-login-link a:hover { color: #14b8b2; }
+                .auth-login-link a:hover { color: #0d7a76; }
 
                 .ant-form-item-explain-error {
                     color: #ff7875 !important;
@@ -320,7 +321,7 @@ const RegisterPage = () => {
                             <div>
                                 <span className="auth-input-label">Tên đăng nhập</span>
                                 <Input className="auth-input" prefix={<UserOutlined />}
-                                    placeholder="Nhập username" size="large" />
+                                    placeholder="Nhập username" size="large" styles={{ input: { color: '#111827' } }} />
                             </div>
                         </Form.Item>
 
@@ -331,7 +332,7 @@ const RegisterPage = () => {
                             <div>
                                 <span className="auth-input-label">Email</span>
                                 <Input className="auth-input" prefix={<MailOutlined />}
-                                    placeholder="Nhập email của bạn" size="large" />
+                                    placeholder="Nhập email của bạn" size="large" styles={{ input: { color: '#111827' } }} />
                             </div>
                         </Form.Item>
 
@@ -342,7 +343,7 @@ const RegisterPage = () => {
                             <div>
                                 <span className="auth-input-label">Mật khẩu</span>
                                 <Input.Password className="auth-input" prefix={<LockOutlined />}
-                                    placeholder="Tối thiểu 8 ký tự" size="large" />
+                                    placeholder="Tối thiểu 8 ký tự" size="large" styles={{ input: { color: '#111827' } }} />
                             </div>
                         </Form.Item>
 
@@ -358,7 +359,7 @@ const RegisterPage = () => {
                             <div>
                                 <span className="auth-input-label">Xác nhận mật khẩu</span>
                                 <Input.Password className="auth-input" prefix={<LockOutlined />}
-                                    placeholder="Nhập lại mật khẩu" size="large" />
+                                    placeholder="Nhập lại mật khẩu" size="large" styles={{ input: { color: '#111827' } }} />
                             </div>
                         </Form.Item>
 
@@ -377,7 +378,7 @@ const RegisterPage = () => {
 
                     <div className="auth-login-link">
                         Đã có tài khoản?
-                        <Link to="/">Đăng nhập ngay →</Link>
+                        <Link to="/login">Đăng nhập ngay →</Link>
                     </div>
                 </div>
             </div>

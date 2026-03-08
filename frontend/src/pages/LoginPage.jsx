@@ -167,7 +167,7 @@ const LoginPage = () => {
 
                 .auth-right {
                     width: 480px;
-                    background: #0a1628;
+                    background: #ffffff;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
@@ -181,18 +181,18 @@ const LoginPage = () => {
                 .auth-form-title {
                     font-size: 30px;
                     font-weight: 800;
-                    color: white;
+                    color: #111827;
                     margin: 0 0 8px 0;
                     letter-spacing: -0.5px;
                 }
 
                 .auth-form-subtitle {
-                    color: rgba(255,255,255,0.45);
+                    color: #6b7280;
                     font-size: 15px;
                 }
 
                 .auth-input-label {
-                    color: rgba(255,255,255,0.7);
+                    color: #374151;
                     font-size: 13px;
                     font-weight: 600;
                     letter-spacing: 0.5px;
@@ -204,10 +204,10 @@ const LoginPage = () => {
                 .auth-input .ant-input,
                 .auth-input .ant-input-password,
                 .auth-input .ant-input-affix-wrapper {
-                    background: rgba(255,255,255,0.06) !important;
-                    border: 1.5px solid rgba(255,255,255,0.1) !important;
+                    background: #f9fafb !important;
+                    border: 1.5px solid #e5e7eb !important;
                     border-radius: 10px !important;
-                    color: white !important;
+                    color: #111827 !important;
                     height: 50px;
                     font-size: 15px;
                     transition: all 0.3s !important;
@@ -216,20 +216,21 @@ const LoginPage = () => {
                 .auth-input .ant-input-affix-wrapper:hover,
                 .auth-input .ant-input-affix-wrapper:focus-within {
                     border-color: #0ea5a0 !important;
-                    background: rgba(14,165,160,0.08) !important;
+                    background: #f0fffe !important;
                     box-shadow: 0 0 0 3px rgba(14,165,160,0.15) !important;
                 }
 
-                .auth-input .ant-input::placeholder {
-                    color: rgba(255,255,255,0.25) !important;
+                .auth-input .ant-input::placeholder,
+                .auth-input .ant-input-affix-wrapper input::placeholder {
+                    color: #9ca3af !important;
                 }
 
                 .auth-input .anticon {
-                    color: rgba(255,255,255,0.35) !important;
+                    color: #9ca3af !important;
                 }
 
                 .auth-input .ant-input-password-icon {
-                    color: rgba(255,255,255,0.35) !important;
+                    color: #9ca3af !important;
                 }
 
                 .auth-submit-btn {
@@ -275,17 +276,17 @@ const LoginPage = () => {
                 .auth-divider-line {
                     flex: 1;
                     height: 1px;
-                    background: rgba(255,255,255,0.08);
+                    background: #e5e7eb;
                 }
 
                 .auth-divider-text {
-                    color: rgba(255,255,255,0.3);
+                    color: #9ca3af;
                     font-size: 13px;
                 }
 
                 .auth-register-link {
                     text-align: center;
-                    color: rgba(255,255,255,0.45);
+                    color: #6b7280;
                     font-size: 14px;
                 }
 
@@ -297,7 +298,7 @@ const LoginPage = () => {
                 }
 
                 .auth-register-link a:hover {
-                    color: #14b8b2;
+                    color: #0d7a76;
                 }
 
                 .ant-form-item-explain-error {

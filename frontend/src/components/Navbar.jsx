@@ -113,7 +113,7 @@ const Navbar = () => {
                 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
                 .navbar-wrapper { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; font-family: 'Be Vietnam Pro', sans-serif; }
                 .navbar-container { background: rgba(10, 22, 40, 0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(14, 165, 160, 0.2); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; height: 68px; }
-                .navbar-logo { height: 48px; object-fit: contain; cursor: pointer; transition: opacity 0.2s; }
+                .navbar-logo { height: 60px; object-fit: contain; cursor: pointer; transition: opacity 0.2s; }
                 .navbar-logo:hover { opacity: 0.85; }
                 .navbar-links { display: flex; align-items: center; gap: 4px; }
                 .navbar-link { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.65); cursor: pointer; transition: all 0.2s; text-decoration: none; border: none; background: none; font-family: 'Be Vietnam Pro', sans-serif; }
