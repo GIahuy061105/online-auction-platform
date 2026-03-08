@@ -35,8 +35,13 @@ public class SecurityConfiguration {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/payment/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/auctions",
+                                "/api/auctions/**",
+                                "/api/auctions/category/**",
+                                "/api/auctions/search"
+                        ).permitAll()
                         .requestMatchers("/api/wishlists/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/auctions/**").permitAll()
                         .anyRequest().authenticated() // Còn lại phải có Token
                 )
                 .sessionManagement(session -> session

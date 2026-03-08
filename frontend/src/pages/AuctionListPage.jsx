@@ -62,7 +62,6 @@ const AuctionListPage = () => {
             setAuctions(response.data);
         } catch (error) {
             console.error("Lỗi tải danh sách:", error);
-            if (error.response?.status === 403) navigate('/');
         } finally {
             setLoading(false);
         }

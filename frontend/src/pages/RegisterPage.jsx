@@ -18,7 +18,7 @@ const RegisterPage = () => {
             };
             await api.post('/auth/register', payload);
             message.success('🎉 Đăng ký thành công! Vui lòng đăng nhập.');
-            navigate('/');
+            navigate('/login');
         } catch (error) {
             console.error("Lỗi đăng ký:", error);
             const errorMsg = error.response?.data?.message || 'Đăng ký thất bại! Username hoặc Email có thể đã tồn tại.';

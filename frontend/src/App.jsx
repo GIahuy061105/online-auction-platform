@@ -13,7 +13,7 @@ import InfoPage from './pages/InfoPage';
 import ContactPage from './pages/ContactPage';
 import DepositPage from './pages/DepositPage';
 import {INFO_ROUTES_DATA} from './components/InfoRoutes';
-const { Title, Paragraph, Text } = Typography;
+
 function App() {
   return (
       <ConfigProvider
@@ -40,32 +40,33 @@ function App() {
         >
       <BrowserRouter>
           <Routes>
-              {/*Mặc định vào Login*/}
-              <Route path="/" element={<LoginPage />} />
+              {/* Trang chính - ai cũng xem được */}
+              <Route path="/" element={<AuctionListPage />} />
+              <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage/>} />
-              {/*Route cho trang đấu giá */}
+              {/* Route cho trang đấu giá */}
               <Route path="/auction" element={<AuctionListPage/>} />
-              {/*Route tạo buổi đấu giá */}
-              <Route path="/create-auction" element={<CreateAuctionPage/>}     />
-              {/*Route xem chi tiết sản phẩm */}
+              {/* Route xem chi tiết sản phẩm */}
               <Route path="/auction/:id" element={<AuctionDetailsPage/>} />
-              {/*Route xem profile ng dùng */}
-              <Route path ="/profile" element={<ProfilePage/>} />
-              {/*Route xem trang hoạt động */}
+              {/* Route tạo buổi đấu giá */}
+              <Route path="/create-auction" element={<CreateAuctionPage/>} />
+              {/* Route xem profile ng dùng */}
+              <Route path="/profile" element={<ProfilePage/>} />
+              {/* Route xem trang hoạt động */}
               <Route path="/my-activity" element={<MyActivityPage />} />
-              {/*Route xem các sản phẩm bản thân đã bán */}
+              {/* Route xem các sản phẩm bản thân đã bán */}
               <Route path="/my-store" element={<MyStorePage />} />
-              {/*Route xem danh sách sản phẩm yêu thích */}
+              {/* Route xem danh sách sản phẩm yêu thích */}
               <Route path="/my-wishlist" element={<MyWishListPage />} />
-              {/*Route xem trang nạp tiền */}
+              {/* Route xem trang nạp tiền */}
               <Route path="/deposit" element={<DepositPage />} />
               <Route path="/users/contact" element={<ContactPage />} />
               {INFO_ROUTES_DATA.map((item) => (
-                                <Route
-                                  key={item.path}
-                                  path={item.path}
-                                  element={<InfoPage title={item.title} content={item.content} />}
-                                />
+                <Route
+                  key={item.path}
+                  path={item.path}
+                  element={<InfoPage title={item.title} content={item.content} />}
+                />
               ))}
            </Routes>
       </BrowserRouter>

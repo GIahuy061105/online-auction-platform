@@ -18,8 +18,10 @@ const Navbar = () => {
     const location = useLocation();
     const [userProfile, setUserProfile] = useState(null);
     const [notifCount, setNotifCount] = useState(0);
+    const isLoggedIn = !!localStorage.getItem('token');
 
     const getUserData = async () => {
+        if (!localStorage.getItem('token')) return;
         try {
             const response = await api.get('/users/my-profile');
             setUserProfile(response.data);
@@ -30,7 +32,6 @@ const Navbar = () => {
 
     useEffect(() => { getUserData(); }, []);
 
-    // Reload balance khi quay lại từ trang deposit
     useEffect(() => {
         if (location.pathname === '/auction' || location.pathname === '/deposit') {
             getUserData();
@@ -71,34 +72,17 @@ const Navbar = () => {
             key: 'user-info',
             label: (
                 <div style={{ padding: '12px 4px 8px', borderBottom: '1px solid #f0f0f0', marginBottom: 4 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: '#0d7a76' }}>
-                        {userProfile?.username}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>
-                        {userProfile?.email}
-                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: '#0d7a76' }}>{userProfile?.username}</div>
+                    <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>{userProfile?.email}</div>
                     <div style={{
-                        marginTop: 8,
-                        background: 'linear-gradient(90deg, #e6fffc, #f0fffe)',
-                        border: '1px solid #b5f5ec',
-                        borderRadius: 8,
-                        padding: '6px 10px',
-                        fontSize: 13,
-                        color: '#0d7a76',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
+                        marginTop: 8, background: 'linear-gradient(90deg, #e6fffc, #f0fffe)',
+                        border: '1px solid #b5f5ec', borderRadius: 8, padding: '6px 10px',
+                        fontSize: 13, color: '#0d7a76', fontWeight: 600,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
                         <span>💰 {formatCurrency(userProfile?.balance || 0)}</span>
-                        <span
-                            onClick={(e) => { e.stopPropagation(); navigate('/deposit'); }}
-                            style={{
-                                fontSize: 11, color: '#0ea5a0', fontWeight: 700,
-                                cursor: 'pointer', textDecoration: 'underline',
-                                textUnderlineOffset: 2
-                            }}
-                        >
+                        <span onClick={(e) => { e.stopPropagation(); navigate('/deposit'); }}
+                            style={{ fontSize: 11, color: '#0ea5a0', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}>
                             + Nạp tiền
                         </span>
                     </div>
@@ -106,46 +90,14 @@ const Navbar = () => {
             ),
             disabled: true,
         },
-        {
-            key: 'profile',
-            label: 'Hồ sơ cá nhân',
-            icon: <UserOutlined />,
-            onClick: () => navigate('/profile'),
-        },
-        {
-            key: 'activity',
-            label: 'Hoạt động của tôi',
-            icon: <ShopOutlined />,
-            onClick: () => navigate('/my-activity'),
-        },
-        {
-            key: 'my-store',
-            label: 'Cửa hàng của tôi',
-            icon: <ShoppingOutlined />,
-            onClick: () => navigate('/my-store'),
-        },
-        {
-            key: 'my-wishlist',
-            label: 'Danh sách yêu thích',
-            icon: <HeartOutlined />,
-            onClick: () => navigate('/my-wishlist'),
-        },
+        { key: 'profile', label: 'Hồ sơ cá nhân', icon: <UserOutlined />, onClick: () => navigate('/profile') },
+        { key: 'activity', label: 'Hoạt động của tôi', icon: <ShopOutlined />, onClick: () => navigate('/my-activity') },
+        { key: 'my-store', label: 'Cửa hàng của tôi', icon: <ShoppingOutlined />, onClick: () => navigate('/my-store') },
+        { key: 'my-wishlist', label: 'Danh sách yêu thích', icon: <HeartOutlined />, onClick: () => navigate('/my-wishlist') },
         { type: 'divider' },
-        {
-            key: 'deposit',
-            label: 'Nạp tiền vào ví',
-            icon: <WalletOutlined />,
-            onClick: () => navigate('/deposit'),
-            style: { color: '#0d7a76', fontWeight: 600 },
-        },
+        { key: 'deposit', label: 'Nạp tiền vào ví', icon: <WalletOutlined />, onClick: () => navigate('/deposit'), style: { color: '#0d7a76', fontWeight: 600 } },
         { type: 'divider' },
-        {
-            key: 'logout',
-            label: 'Đăng xuất',
-            icon: <LogoutOutlined />,
-            danger: true,
-            onClick: handleLogout,
-        },
+        { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, danger: true, onClick: handleLogout },
     ];
 
     const navLinks = [
@@ -170,20 +122,22 @@ const Navbar = () => {
                 .navbar-actions { display: flex; align-items: center; gap: 12px; }
                 .navbar-sell-btn { height: 38px; padding: 0 20px; background: linear-gradient(90deg, #0d7a76, #0ea5a0) !important; border: none !important; border-radius: 10px !important; font-size: 13px !important; font-weight: 700 !important; color: white !important; cursor: pointer; transition: all 0.3s !important; box-shadow: 0 2px 12px rgba(14,165,160,0.35) !important; font-family: 'Be Vietnam Pro', sans-serif !important; }
                 .navbar-sell-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(14,165,160,0.5) !important; }
+                .navbar-login-btn { height: 38px; padding: 0 20px; background: transparent !important; border: 1px solid rgba(14,165,160,0.5) !important; border-radius: 10px !important; font-size: 13px !important; font-weight: 600 !important; color: rgba(255,255,255,0.85) !important; cursor: pointer; transition: all 0.2s !important; font-family: 'Be Vietnam Pro', sans-serif !important; }
+                .navbar-login-btn:hover { border-color: #0ea5a0 !important; color: #0ea5a0 !important; background: rgba(14,165,160,0.08) !important; }
+                .navbar-register-btn { height: 38px; padding: 0 20px; background: linear-gradient(90deg, #0d7a76, #0ea5a0) !important; border: none !important; border-radius: 10px !important; font-size: 13px !important; font-weight: 700 !important; color: white !important; cursor: pointer; transition: all 0.3s !important; box-shadow: 0 2px 12px rgba(14,165,160,0.35) !important; font-family: 'Be Vietnam Pro', sans-serif !important; }
+                .navbar-register-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(14,165,160,0.5) !important; }
                 .navbar-notif-btn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s; color: rgba(255,255,255,0.7); font-size: 16px; }
                 .navbar-notif-btn:hover { background: rgba(14,165,160,0.12); border-color: rgba(14,165,160,0.3); color: #0ea5a0; }
                 .navbar-avatar-wrapper { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); transition: all 0.2s; }
                 .navbar-avatar-wrapper:hover { background: rgba(14,165,160,0.12); border-color: rgba(14,165,160,0.3); }
                 .navbar-username { font-size: 13px; font-weight: 600; color: white; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-                .ant-dropdown-menu { border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important; padding: 8px !important; min-width: 220px !important; }
-                .ant-dropdown-menu-item { border-radius: 8px !important; margin: 2px 0 !important; }
-                @media (max-width: 768px) { .navbar-links { display: none; } .navbar-container { padding: 0 16px; } .navbar-sell-btn span:last-child { display: none; } }
+                @media (max-width: 768px) { .navbar-links { display: none; } .navbar-container { padding: 0 16px; } }
             `}</style>
 
             <div className="navbar-wrapper">
                 <div className="navbar-container">
                     <img src="/LOGO_nowatermark.png" alt="SDKAuction" className="navbar-logo"
-                        onClick={() => navigate('/auction')}
+                        onClick={() => navigate('/')}
                         onError={(e) => { e.target.style.display = 'none'; }} />
 
                     <div className="navbar-links">
@@ -197,21 +151,34 @@ const Navbar = () => {
                     </div>
 
                     <div className="navbar-actions">
-                        <Button className="navbar-sell-btn" icon={<PlusCircleOutlined />} onClick={() => navigate('/create-auction')}>
-                            Đăng bán
-                        </Button>
-                        <Badge count={notifCount} size="small">
-                            <div className="navbar-notif-btn" onClick={() => setNotifCount(0)}>
-                                <BellOutlined />
-                            </div>
-                        </Badge>
-                        <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
-                            <div className="navbar-avatar-wrapper">
-                                <Avatar size={32} icon={<UserOutlined />}
-                                    style={{ background: 'linear-gradient(135deg, #0d7a76, #0ea5a0)', flexShrink: 0 }} />
-                                <span className="navbar-username">{userProfile?.username || '...'}</span>
-                            </div>
-                        </Dropdown>
+                        {isLoggedIn ? (
+                            <>
+                                <Button className="navbar-sell-btn" icon={<PlusCircleOutlined />} onClick={() => navigate('/create-auction')}>
+                                    Đăng bán
+                                </Button>
+                                <Badge count={notifCount} size="small">
+                                    <div className="navbar-notif-btn" onClick={() => setNotifCount(0)}>
+                                        <BellOutlined />
+                                    </div>
+                                </Badge>
+                                <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
+                                    <div className="navbar-avatar-wrapper">
+                                        <Avatar size={32} icon={<UserOutlined />}
+                                            style={{ background: 'linear-gradient(135deg, #0d7a76, #0ea5a0)', flexShrink: 0 }} />
+                                        <span className="navbar-username">{userProfile?.username || '...'}</span>
+                                    </div>
+                                </Dropdown>
+                            </>
+                        ) : (
+                            <>
+                                <Button className="navbar-login-btn" onClick={() => navigate('/login')}>
+                                    Đăng nhập
+                                </Button>
+                                <Button className="navbar-register-btn" onClick={() => navigate('/register')}>
+                                    Đăng ký
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

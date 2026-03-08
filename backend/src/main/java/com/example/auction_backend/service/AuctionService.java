@@ -77,7 +77,7 @@ public class AuctionService {
     public Auction placeBid(Long auctionId, BigDecimal bidAmount, String username) {
         User bidder = userRepository.findByUsername(username).
                 orElseThrow(() -> new RuntimeException("Không tìm thấy tên người dùng"));
-
+        validateUserProfile(bidder);
         Auction auction = auctionRepository.findByIdForBidding(auctionId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
 
@@ -156,7 +156,6 @@ public class AuctionService {
     public Auction buyNow(Long auctionId, String username) {
         Auction auction = auctionRepository.findByIdWithDetails(auctionId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá!"));
-
         // 1. Kiểm tra điều kiện
         if (auction.getStatus() != AuctionStatus.OPEN) {
             throw new RuntimeException("Phiên đấu giá này đã kết thúc hoặc chưa bắt đầu!");
@@ -167,6 +166,7 @@ public class AuctionService {
 
         User buyer = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+        validateUserProfile(buyer);
         if (buyer.getBalance().compareTo(auction.getBuyNowPrice()) < 0) {
             throw new RuntimeException("Số dư không đủ để mua đứt sản phẩm này!");
         }
@@ -207,5 +207,16 @@ public class AuctionService {
                 AuctionStatus.OPEN,
                 currentAuctionId
         );
+    }
+    private void validateUserProfile(User user) {
+        if (user.getFullName() == null || user.getFullName().isBlank()) {
+            throw new RuntimeException("Bạn cần cập nhật họ tên trước khi tham gia đấu giá!");
+        }
+        if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank()) {
+            throw new RuntimeException("Bạn cần cập nhật số điện thoại trước khi tham gia đấu giá!");
+        }
+        if (user.getAddresses() == null || user.getAddresses().isEmpty()) {
+            throw new RuntimeException("Bạn cần thêm địa chỉ giao hàng trước khi tham gia đấu giá!");
+        }
     }
 }

@@ -23,7 +23,7 @@ const AuctionDetailPage = () => {
     const [selectedMedia, setSelectedMedia] = useState(null);
     const [isLiked, setIsLiked] = useState(false);
     const [recommendations, setRecommendations] = useState([]);
-
+    const [userProfile, setUserProfile] = useState(null);
     const isVideo = (url) => url && url.match(/\.(mp4|webm|ogg|mov)$/i);
     const currentIndex = auction?.imageUrls ? auction.imageUrls.indexOf(selectedMedia) : 0;
     const deadline = auction ? new Date(auction.endTime).getTime() : 0;
@@ -62,6 +62,12 @@ const AuctionDetailPage = () => {
     };
 
     const handleBuyNow = async () => {
+         if (!localStorage.getItem('token')) {
+                message.warning('Vui lòng đăng nhập để mua!');
+                navigate('/login');
+                return;
+         }
+         if (!checkProfile()) return;
         setLoadingBuyNow(true);
         try {
             await api.post(`/auctions/${id}/buy-now`);
@@ -91,6 +97,12 @@ const AuctionDetailPage = () => {
     }, [id]);
 
     const handleBid = async (values) => {
+        if (!localStorage.getItem('token')) {
+                message.warning('Vui lòng đăng nhập để đấu giá!');
+                navigate('/login');
+                return;
+        }
+        if (!checkProfile()) return;
         setBidding(true);
         try {
             await api.post(`/auctions/${id}/bid`, null, { params: { amount: values.amount } });
@@ -106,7 +118,7 @@ const AuctionDetailPage = () => {
     const handleToggleWishlist = async () => {
         if (!localStorage.getItem('token')) {
             message.warning("Vui lòng đăng nhập để dùng tính năng Yêu thích!");
-            setTimeout(() => navigate('/'), 1000);
+            setTimeout(() => navigate('/login'), 1000);
             return;
         }
         try {
@@ -132,7 +144,53 @@ const AuctionDetailPage = () => {
             setRecommendations(response.data);
         } catch (error) { }
     };
-
+    useEffect(() => {
+        const fetchProfile = async () => {
+            if (!localStorage.getItem('token')) return;
+            try {
+                const res = await api.get('/users/my-profile');
+                setUserProfile(res.data);
+            } catch (e) {}
+        };
+        fetchProfile();
+    }, []);
+    const checkProfile = () => {
+        if (!userProfile?.fullName || !userProfile?.phoneNumber) {
+            message.warning({
+                content: (
+                    <span>
+                        Bạn cần cập nhật <b>họ tên</b> và <b>số điện thoại</b>!{' '}
+                        <span
+                            onClick={() => navigate('/profile')}
+                            style={{ color: '#0ea5a0', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                            Cập nhật ngay
+                        </span>
+                    </span>
+                ),
+                duration: 5,
+            });
+            return false;
+        }
+        if (!userProfile?.addresses || userProfile.addresses.length === 0) {
+            message.warning({
+                content: (
+                    <span>
+                        Bạn cần thêm <b>địa chỉ giao hàng</b>!{' '}
+                        <span
+                            onClick={() => navigate('/profile')}
+                            style={{ color: '#0ea5a0', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                            Thêm địa chỉ ngay
+                        </span>
+                    </span>
+                ),
+                duration: 5,
+            });
+            return false;
+        }
+        return true;
+    };
     if (loading) return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f0fffe', gap: 16 }}>
             <Spin size="large" />

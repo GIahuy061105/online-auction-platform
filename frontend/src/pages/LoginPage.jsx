@@ -344,7 +344,7 @@ const LoginPage = () => {
                 {/* RIGHT PANEL */}
                 <div className="auth-right">
                     <div className="auth-form-header">
-                        <h2 className="auth-form-title">Chào mừng trở lại 👋</h2>
+                        <h2 className="auth-form-title">Chào mừng đến với SDKAuction 👋</h2>
                         <p className="auth-form-subtitle">Đăng nhập để tiếp tục tham gia đấu giá</p>
                     </div>
 
