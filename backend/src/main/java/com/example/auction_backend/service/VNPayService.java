@@ -57,22 +57,19 @@ public class VNPayService {
 
         StringBuilder hashData = new StringBuilder();
         for (Map.Entry<String, String> entry : sortedParams.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-
-            if (value != null && !value.isEmpty()) {
-                hashData.append(key).append('=').append(value).append('&');
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                // ✅ Encode value giống createPaymentUrl
+                String encVal = URLEncoder.encode(entry.getValue(), StandardCharsets.US_ASCII);
+                hashData.append(entry.getKey()).append('=').append(encVal).append('&');
             }
         }
+        if (hashData.length() > 0) hashData.deleteCharAt(hashData.length() - 1);
 
-        if (hashData.length() > 0) {
-            hashData.deleteCharAt(hashData.length() - 1);
-        }
         String checkHash = hmacSHA512(config.getHashSecret(), hashData.toString());
-        System.out.println("--- NEW DEBUG VERIFY ---");
-        System.out.println("Raw Data (No Encode): " + hashData.toString());
+
         System.out.println("Calculated: " + checkHash);
         System.out.println("Expected  : " + vnp_SecureHash);
+        System.out.println("Match: " + checkHash.equalsIgnoreCase(vnp_SecureHash));
 
         return checkHash.equalsIgnoreCase(vnp_SecureHash);
     }
