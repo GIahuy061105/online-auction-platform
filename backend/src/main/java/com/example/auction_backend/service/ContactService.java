@@ -22,7 +22,7 @@ public class ContactService {
         if (ipBlockMap.containsKey(clientIP)) {
             LocalDateTime lastSent = ipBlockMap.get(clientIP);
             if (now.isBefore(lastSent.plusHours(1))) {
-                throw new RuntimeException("Bạn gửi quá nhanh! Vui lòng đợi 2 phút.");
+                throw new RuntimeException("Bạn gửi quá nhanh! Vui lòng đợi 1 tiếng.");
             }
         }
         SimpleMailMessage message = getSimpleMailMessage(request);
@@ -39,7 +39,7 @@ public class ContactService {
 
     private static SimpleMailMessage getSimpleMailMessage(ContactRequest request) {
         SimpleMailMessage message = new SimpleMailMessage();
-
+        message.setFrom("onboarding@resend.dev");
         message.setTo("nguyengiahu29@gmail.com");
         message.setSubject("[SDKAuction - Liên hệ mới]: " + request.getSubject());
 

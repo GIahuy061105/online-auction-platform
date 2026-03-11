@@ -70,6 +70,7 @@ public class AuthenticationService {
         user.setOtpExpiryTime(LocalDateTime.now().plusMinutes(5)); // 5 phút hết hạn
         repository.save(user);
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("onboarding@resend.dev");
         message.setTo(email);
         message.setSubject("Mã xác nhận để đổi mật khẩu - SDKAuction");
         message.setText("Chào " + user.getUsername() + ",\n\n"
