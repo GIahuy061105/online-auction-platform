@@ -3,8 +3,26 @@
 > Nền tảng đấu giá trực tuyến thời gian thực, cho phép người dùng mua bán sản phẩm thông qua hình thức đấu giá minh bạch và công bằng.
 
 🌐 **Live:** [https://sdkauction.vercel.app](https://sdkauction.vercel.app)
-
 📦 **Repo:** [https://github.com/GIahuy061105/online-auction-platform](https://github.com/GIahuy061105/online-auction-platform)
+
+---
+
+## 📸 Giao diện
+
+### 🏠 Sàn đấu giá
+![Trang chủ](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/trangchu.png)
+
+### 👤 Hồ sơ cá nhân
+![Hồ sơ cá nhân](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/hosocanhan.png)
+
+### 🏪 Cửa hàng của tôi
+![Cửa hàng](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/cuahangcanhan.png)
+
+### 📦 Đăng bán sản phẩm
+![Đăng bán](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/dangban.png)
+
+### 📬 Liên hệ
+![Liên hệ](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/lienhe.png)
 
 ---
 
@@ -50,7 +68,6 @@ SDKAuction là nền tảng đấu giá trực tuyến được xây dựng vớ
                                        └─────────────────────┘
 ```
 
-**URLs:**
 | Service | URL |
 |---------|-----|
 | Frontend | https://sdkauction.vercel.app |
@@ -63,6 +80,7 @@ SDKAuction là nền tảng đấu giá trực tuyến được xây dựng vớ
 
 ### 👤 Người dùng
 - ✅ Đăng ký / Đăng nhập bằng JWT
+- ✅ Quên mật khẩu qua email OTP
 - ✅ Hồ sơ cá nhân (họ tên, số điện thoại, địa chỉ giao hàng)
 - ✅ Ví điện tử — nạp tiền qua VNPay
 - ✅ Danh sách yêu thích
@@ -94,7 +112,11 @@ SDKAuction là nền tảng đấu giá trực tuyến được xây dựng vớ
 - ✅ Cài đặt giá khởi điểm, bước giá, giá mua đứt
 - ✅ Cài đặt thời gian bắt đầu/kết thúc
 - ✅ Quản lý cửa hàng cá nhân
-- ✅ Cập nhật thông tin giao hàng sau khi bán
+- ✅ Xem thông tin giao hàng sau khi bán
+
+### 📬 Liên hệ
+- ✅ Form liên hệ gửi email trực tiếp
+- ✅ Rate limiting chống spam
 
 ---
 
@@ -122,6 +144,7 @@ SDKAuction là nền tảng đấu giá trực tuyến được xây dựng vớ
 | PostgreSQL Driver | 42.7.9 | Database driver |
 | Lombok | - | Code generation |
 | JWT (jjwt) | - | Token authentication |
+| Resend API | - | Email service |
 
 ### Infrastructure
 | Service | Mục đích |
@@ -129,7 +152,9 @@ SDKAuction là nền tảng đấu giá trực tuyến được xây dựng vớ
 | Vercel | Frontend hosting |
 | Railway | Backend hosting |
 | Supabase | PostgreSQL database |
+| Cloudinary | Lưu trữ ảnh/video |
 | VNPay Sandbox | Payment gateway |
+| Resend | Email service |
 | UptimeRobot | Server monitoring |
 
 ---
@@ -153,10 +178,6 @@ cd online-auction-platform
 
 ```bash
 cd backend
-
-# Cấu hình database trong application.properties
-# (xem phần Cấu hình môi trường bên dưới)
-
 mvn spring-boot:run
 # Backend chạy tại http://localhost:8080
 ```
@@ -165,14 +186,7 @@ mvn spring-boot:run
 
 ```bash
 cd frontend
-
-# Cài dependencies
 npm install
-
-# Tạo file .env.local
-cp .env.example .env.local
-# Sửa VITE_API_URL=http://localhost:8080/api
-
 npm run dev
 # Frontend chạy tại http://localhost:5173
 ```
@@ -184,20 +198,16 @@ npm run dev
 ### Backend — `application.properties`
 
 ```properties
-# Database
 spring.datasource.url=${SPRING_DATASOURCE_URL}
 spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
 spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 
-# JPA
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
+cloudinary.cloud-name=${CLOUDINARY_CLOUD_NAME}
+cloudinary.api-key=${CLOUDINARY_API_KEY}
+cloudinary.api-secret=${CLOUDINARY_API_SECRET}
 
-# JWT
-jwt.secret=${JWT_SECRET}
-jwt.expiration=86400000
+spring.mail.password=${SPRING_MAIL_PASSWORD}  # Resend API key
 
-# VNPay
 VNPAY_TMN_CODE=${VNPAY_TMN_CODE}
 VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
 VNPAY_URL=${VNPAY_URL}
@@ -218,7 +228,10 @@ VITE_WS_URL=https://sdkauction.up.railway.app
 | `SPRING_DATASOURCE_URL` | JDBC URL của Supabase |
 | `SPRING_DATASOURCE_USERNAME` | Username database |
 | `SPRING_DATASOURCE_PASSWORD` | Password database |
-| `JWT_SECRET` | Secret key cho JWT |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret |
+| `SPRING_MAIL_PASSWORD` | Resend API key (`re_xxx`) |
 | `VNPAY_TMN_CODE` | Mã merchant VNPay |
 | `VNPAY_HASH_SECRET` | Secret key VNPay |
 | `VNPAY_URL` | URL cổng thanh toán VNPay |
@@ -232,63 +245,52 @@ VITE_WS_URL=https://sdkauction.up.railway.app
 
 1. Truy cập [https://sdkauction.vercel.app](https://sdkauction.vercel.app)
 2. Click **"Đăng ký"** ở góc trên phải
-3. Nhập **username**, **email**, **mật khẩu** (tối thiểu 8 ký tự)
-4. Click **"Tạo tài khoản ngay"**
-5. Đăng nhập với username/password vừa tạo
-   
-6. Username: Buyer , password: Buyer123 ( Có sẵn tiền )
+3. Nhập **username**, **email**, **mật khẩu**
+4. Đăng nhập với username/password vừa tạo
 
-7. Username Seller , password : Seller123
-8. Hoặc bạn có thể sử dụng 2 tài khoản có sẵn để test.
+> 💡 **Tài khoản test có sẵn:**
+> - Buyer: `Buyer` / `Buyer123` (có sẵn tiền trong ví)
+> - Seller: `Seller` / `Seller123`
+
 ---
 
 ### 👤 Cập nhật hồ sơ cá nhân
 
 > ⚠️ **Bắt buộc** trước khi đấu giá hoặc mua sản phẩm
 
-1. Click vào **avatar** góc trên phải → **"Hồ sơ cá nhân"**
-2. Cập nhật **Họ tên đầy đủ**
-3. Cập nhật **Số điện thoại**
-4. Thêm ít nhất **1 địa chỉ giao hàng**
-5. Click **Lưu**
+1. Click vào **avatar** → **"Hồ sơ cá nhân"**
+2. Cập nhật **Họ tên**, **Số điện thoại**
+3. Thêm ít nhất **1 địa chỉ giao hàng**
+4. Click **Lưu**
 
 ---
 
 ### 💳 Nạp tiền vào ví
 
-1. Click **avatar** → **"Nạp tiền vào ví"** hoặc click **"+ Nạp tiền"** trong dropdown
-2. Chọn số tiền preset hoặc nhập số tiền tùy ý (tối thiểu 10,000₫)
+1. Click **avatar** → **"Nạp tiền vào ví"**
+2. Chọn hoặc nhập số tiền (tối thiểu 10,000₫)
 3. Click **"Nạp tiền qua VNPay"**
-4. Hệ thống chuyển sang trang thanh toán VNPay
-5. Chọn ngân hàng và hoàn tất thanh toán
 
-**Thẻ test (Sandbox):**
+**Thẻ test Sandbox:**
 
-    | Ngân hàng :  NCB |
-    | Số thẻ : 9704198526191432198 |
-    | Tên chủ thẻ : NGUYEN VAN A |
-    | Ngày phát hành : 07/15 |
-    | OTP : 123456 |
+| Thông tin | Giá trị |
+|-----------|---------|
+| Ngân hàng | NCB |
+| Số thẻ | 9704198526191432198 |
+| Tên chủ thẻ | NGUYEN VAN A |
+| Ngày phát hành | 07/15 |
+| OTP | 123456 |
 
 ---
 
 ### 🔍 Xem & Tìm kiếm sản phẩm
 
-- **Không cần đăng nhập** để xem danh sách và chi tiết sản phẩm
-- Lọc theo **danh mục** bằng thanh category bar ở trên
-- Tìm kiếm theo **tên sản phẩm** bằng ô search
-- Lọc theo **trạng thái**: Đang diễn ra / Sắp diễn ra / Đã kết thúc
+- **Không cần đăng nhập** để xem sản phẩm
+- Lọc theo **danh mục** bằng category bar ở trên
+- Tìm kiếm theo **tên sản phẩm**
+- Lọc theo trạng thái: Đang diễn ra / Sắp diễn ra / Đã kết thúc
 
-**Danh mục sản phẩm:**
-- 📱 Điện thoại (SMARTPHONES)
-- 💻 Laptop (LAPTOPS)
-- 📟 Tablet (TABLETS)
-- 🎧 Âm thanh (AUDIO)
-- ⌚ Đồng hồ (WEARABLES)
-- 🎮 Gaming (GAMING)
-- 🔧 Linh kiện PC (PC_COMPONENTS)
-- 🔌 Phụ kiện (ACCESSORIES)
-- 📦 Khác (OTHER_ELECTRONICS)
+**Danh mục:** 📱 Điện thoại · 💻 Laptop · 📟 Tablet · 🎧 Âm thanh · ⌚ Đồng hồ · 🎮 Gaming · 🔧 Linh kiện PC · 🔌 Phụ kiện · 📦 Khác
 
 ---
 
@@ -296,55 +298,42 @@ VITE_WS_URL=https://sdkauction.up.railway.app
 
 > ⚠️ Cần đăng nhập + hồ sơ đầy đủ + đủ số dư
 
-1. Tìm sản phẩm đang **ĐANG MỞ ĐẤU GIÁ** (badge xanh)
-2. Click vào sản phẩm để xem chi tiết
-3. Trong khung **"Đặt giá của bạn"**, nhập số tiền ≥ giá tối thiểu
-4. Click **"ĐẶT GIÁ NGAY"**
-5. Nếu bị người khác vượt giá → số tiền tự động **hoàn về ví**
-6. Thắng đấu giá khi countdown hết giờ và bạn là người trả cao nhất
+1. Tìm sản phẩm **ĐANG DIỄN RA** (badge xanh)
+2. Nhập số tiền ≥ giá tối thiểu → Click **"ĐẶT GIÁ NGAY"**
+3. Nếu bị vượt giá → tiền tự động **hoàn về ví**
+4. Thắng khi countdown hết và bạn là người trả cao nhất
 
 ---
 
 ### ⚡ Mua đứt ngay (Buy Now)
 
 1. Vào trang chi tiết sản phẩm có **giá mua đứt**
-2. Xem giá ở khung vàng **"Mua ngay không cần đấu giá"**
-3. Click **"⚡ MUA ĐỨT NGAY"**
-4. Hệ thống trừ tiền và đóng phiên đấu giá ngay lập tức
+2. Click **"⚡ MUA ĐỨT NGAY"**
+3. Hệ thống trừ tiền và đóng phiên đấu giá ngay lập tức
 
 ---
 
 ### 📦 Đăng bán sản phẩm
 
-1. Click **"Đăng bán"** ở Navbar (cần đăng nhập)
-2. Điền thông tin sản phẩm:
-    - **Tên sản phẩm** và **mô tả chi tiết**
-    - **Danh mục** phù hợp
-    - **Hình ảnh/Video** sản phẩm (upload nhiều file)
-3. Cài đặt đấu giá:
-    - **Giá khởi điểm** — giá bắt đầu
-    - **Bước giá** — mức tăng tối thiểu mỗi lần đặt
-    - **Giá mua đứt** (tùy chọn) — cho phép mua ngay
-    - **Thời gian bắt đầu & kết thúc**
+1. Click **"Đăng bán"** ở Navbar
+2. Upload ảnh/video, điền thông tin sản phẩm
+3. Cài đặt giá khởi điểm, bước giá, giá mua đứt, thời gian
 4. Click **"Đăng sản phẩm"**
 
 ---
 
-### 🚚 Cập nhật giao hàng (Người bán)
+### 🚚 Cửa hàng & Giao hàng
 
-Sau khi sản phẩm được bán thành công:
-
-1. Vào **"Cửa hàng của tôi"**
-2. Tìm sản phẩm đã bán với trạng thái **CLOSED**
-3. Click **"Giao hàng"**
-4. Nhận thông tin: tên người nhận, SĐT, địa chỉ giao hàng
+- Vào **"Cửa hàng"** để xem doanh thu, sản phẩm đang/đã đấu giá
+- Sau khi bán → Click **"Giao hàng"** để xem thông tin người mua
 
 ---
 
-### ❤️ Danh sách yêu thích
+### 📬 Liên hệ
 
-- Click icon **tim** trên card sản phẩm hoặc trang chi tiết để thêm vào yêu thích
-- Xem danh sách tại **Avatar → "Danh sách yêu thích"**
+- Vào **"Liên hệ"** trên Navbar
+- Điền form → Click **"Gửi tin nhắn"**
+- Hệ thống gửi email trực tiếp đến admin
 
 ---
 
@@ -353,37 +342,40 @@ Sau khi sản phẩm được bán thành công:
 ### Authentication
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| POST | `/api/auth/register` | Đăng ký tài khoản |
+| POST | `/api/auth/register` | Đăng ký |
 | POST | `/api/auth/login` | Đăng nhập |
+| POST | `/api/auth/forgot-password` | Gửi OTP quên mật khẩu |
+| POST | `/api/auth/reset-password` | Đặt lại mật khẩu |
 
 ### Users
 | Method | Endpoint | Mô tả | Auth |
 |--------|----------|-------|------|
-| GET | `/api/users/my-profile` | Lấy thông tin cá nhân | ✅ |
+| GET | `/api/users/my-profile` | Thông tin cá nhân | ✅ |
 | PUT | `/api/users/update` | Cập nhật hồ sơ | ✅ |
+| POST | `/api/users/contact` | Gửi liên hệ | ✅ |
 
 ### Auctions
 | Method | Endpoint | Mô tả | Auth |
 |--------|----------|-------|------|
-| GET | `/api/auctions` | Danh sách tất cả | ❌ |
-| GET | `/api/auctions/{id}` | Chi tiết sản phẩm | ❌ |
-| GET | `/api/auctions/category/{cat}` | Lọc theo danh mục | ❌ |
+| GET | `/api/auctions` | Danh sách | ❌ |
+| GET | `/api/auctions/{id}` | Chi tiết | ❌ |
+| GET | `/api/auctions/category/{cat}` | Lọc danh mục | ❌ |
 | GET | `/api/auctions/search` | Tìm kiếm | ❌ |
-| POST | `/api/auctions` | Tạo đấu giá mới | ✅ |
+| POST | `/api/auctions` | Tạo đấu giá | ✅ |
 | POST | `/api/auctions/{id}/bid` | Đặt giá | ✅ |
 | POST | `/api/auctions/{id}/buy-now` | Mua đứt | ✅ |
 
 ### Payment
 | Method | Endpoint | Mô tả | Auth |
 |--------|----------|-------|------|
-| POST | `/api/payment/create` | Tạo link thanh toán VNPay | ✅ |
-| GET | `/api/payment/vnpay-return` | Callback từ VNPay | ❌ |
+| POST | `/api/payment/create` | Tạo link VNPay | ✅ |
+| GET | `/api/payment/vnpay-return` | Callback VNPay | ❌ |
 
 ### WebSocket
 | Topic | Mô tả |
 |-------|-------|
-| `/topic/auction/{id}` | Cập nhật giá đấu giá |
-| `/topic/auctions/` | Sản phẩm mới/cập nhật |
+| `/topic/auction/{id}` | Cập nhật giá real-time |
+| `/topic/auctions/` | Sản phẩm mới |
 | `/topic/notifications/{username}` | Thông báo cá nhân |
 
 ---
@@ -391,58 +383,30 @@ Sau khi sản phẩm được bán thành công:
 ## 🚀 Deploy
 
 ### Frontend (Vercel)
-
 ```bash
-# Cài Vercel CLI
 npm i -g vercel
-
-cd frontend
-vercel --prod
+cd frontend && vercel --prod
 ```
-
-**Vercel Settings:**
-- Root Directory: `frontend`
-- Output Directory: `dist`
-- Build Command: `npm run build`
 
 ### Backend (Railway)
-
-1. Connect GitHub repo tại [railway.app](https://railway.app)
-2. Set Root Directory: `backend`
-3. Railway tự detect Dockerfile và build
-4. Thêm Environment Variables (xem phần cấu hình)
-
-**Dockerfile** (multi-stage build):
-```dockerfile
-FROM maven:3.9-eclipse-temurin-21 AS build
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
-
-FROM eclipse-temurin:21-jre
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
-```
+1. Connect GitHub → set Root Directory: `backend`
+2. Thêm Environment Variables
+3. Railway tự build và deploy
 
 ### Database (Supabase)
-
-1. Tạo project tại [supabase.com](https://supabase.com)
-2. Vào **Settings → Database**
-3. Copy **Connection String** (Transaction mode, port 6543)
-4. Thêm `?prepareThreshold=0` vào cuối URL
-5. Set IP allowlist: `0.0.0.0/0`
+1. Tạo project → Settings → Database
+2. Copy Connection String (port 6543) + thêm `?prepareThreshold=0`
 
 ---
 
-## 👥 Tác giả
+## 👨‍💻 Tác giả
 
-Dự án được phát triển bởi Sinh viên Nguyễn Phạm Gia Huy.
+Dự án được phát triển bởi **Nguyễn Phạm Gia Huy** — Sinh viên CNTT.
+
+📧 nguyengiahu29@gmail.com · 📱 0777 945 590
 
 ---
 
 ## 📄 License
 
-MIT License — tự do sử dụng cho mục đích học tập.
+MIT License — tự do sử dụng cho mục đích học tập và phi thương mại.
