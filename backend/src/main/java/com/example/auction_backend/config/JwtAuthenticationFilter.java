@@ -21,7 +21,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService; // Nếu dòng này đỏ, hãy thử ấn Alt + Enter để Import
+    private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
     @Override
