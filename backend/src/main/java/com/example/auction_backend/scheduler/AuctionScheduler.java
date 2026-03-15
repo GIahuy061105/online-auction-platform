@@ -7,7 +7,6 @@ import com.example.auction_backend.enums.AuctionStatus;
 import com.example.auction_backend.model.User;
 import com.example.auction_backend.repository.AuctionRepository;
 import com.example.auction_backend.repository.UserRepository;
-import com.example.auction_backend.service.ResendEmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,7 +26,6 @@ public class AuctionScheduler {
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private final ResendEmailService emailService;
 
     @Scheduled(fixedRate = 60000)
     @Transactional
@@ -73,8 +71,8 @@ public class AuctionScheduler {
                     // Thông báo real-time cho WINNER
                     Map<String, Object> winnerNotif = new HashMap<>();
                     winnerNotif.put("title", "🏆 Chúc mừng! Bạn đã thắng!");
-                    winnerNotif.put("message", "Bạn đã thắng phiên đấu giá: " + auction.getProductName()
-                            + " với giá " + finalPrice + "đ");
+                    winnerNotif.put("message", "Bạn đã thắng phiên đấu giá: "
+                            + auction.getProductName() + " với giá " + finalPrice + "đ");
                     winnerNotif.put("auctionId", auction.getId());
                     winnerNotif.put("type", "success");
                     messagingTemplate.convertAndSend(
@@ -90,44 +88,6 @@ public class AuctionScheduler {
                     sellerNotif.put("type", "success");
                     messagingTemplate.convertAndSend(
                             "/topic/notifications/" + seller.getUsername(), (Object) sellerNotif);
-
-                    // Gửi email cho WINNER
-                    try {
-                        if (winner.getEmail() != null) {
-                            emailService.sendEmail(
-                                    winner.getEmail(),
-                                    "🏆 Bạn đã thắng đấu giá - SDKAuction",
-                                    "Chào " + winner.getUsername() + ",\n\n"
-                                            + "Chúc mừng! Bạn đã thắng phiên đấu giá:\n"
-                                            + "Sản phẩm: " + auction.getProductName() + "\n"
-                                            + "Giá chốt: " + finalPrice + "đ\n\n"
-                                            + "Người bán sẽ liên hệ giao hàng sớm nhất có thể.\n\n"
-                                            + "Trân trọng,\nĐội ngũ SDKAuction"
-                            );
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Lỗi gửi email winner: " + e.getMessage());
-                    }
-
-                    // Gửi email cho SELLER
-                    try {
-                        if (seller.getEmail() != null) {
-                            emailService.sendEmail(
-                                    seller.getEmail(),
-                                    "💰 Sản phẩm đã được bán - SDKAuction",
-                                    "Chào " + seller.getUsername() + ",\n\n"
-                                            + "Sản phẩm của bạn đã được bán thành công:\n"
-                                            + "Sản phẩm: " + auction.getProductName() + "\n"
-                                            + "Giá chốt: " + finalPrice + "đ\n"
-                                            + "Người mua: " + winner.getUsername() + "\n\n"
-                                            + "Số tiền đã được cộng vào ví của bạn.\n"
-                                            + "Vui lòng vào Cửa hàng để xem thông tin giao hàng.\n\n"
-                                            + "Trân trọng,\nĐội ngũ SDKAuction"
-                            );
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Lỗi gửi email seller: " + e.getMessage());
-                    }
 
                 } else {
                     // Không có ai đấu giá
