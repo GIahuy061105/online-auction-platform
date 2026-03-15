@@ -10,19 +10,19 @@
 ## 📸 Giao diện
 
 ### 🏠 Sàn đấu giá
-![Trang chủ](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/trangchu.png)
+![Trang chủ](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/frontend/public/screenshots/trangchu.png)
 
 ### 👤 Hồ sơ cá nhân
-![Hồ sơ cá nhân](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/hosocanhan.png)
+![Hồ sơ cá nhân](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/frontend/public/screenshots/hosocanhan.png)
 
 ### 🏪 Cửa hàng của tôi
-![Cửa hàng](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/cuahangcanhan.png)
+![Cửa hàng](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/frontend/public/screenshots/cuahangcanhan.png)
 
 ### 📦 Đăng bán sản phẩm
-![Đăng bán](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/dangban.png)
+![Đăng bán](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/frontend/public/screenshots/dangban.png)
 
 ### 📬 Liên hệ
-![Liên hệ](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/docs/screenshots/lienhe.png)
+![Liên hệ](https://raw.githubusercontent.com/GIahuy061105/online-auction-platform/main/frontend/public/screenshots/lienhe.png)
 
 ---
 
