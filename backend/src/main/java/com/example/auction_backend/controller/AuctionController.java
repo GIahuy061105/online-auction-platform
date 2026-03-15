@@ -11,16 +11,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 @RestController
 @RequestMapping("/api/auctions")
 @RequiredArgsConstructor
@@ -28,50 +26,30 @@ public class AuctionController {
     private final SimpMessagingTemplate messagingTemplate;
     private final AuctionService auctionService;
     private final AuctionRepository auctionRepository;
-
-    // Rate limiting: mỗi user chỉ được bid 1 lần / 2 giây / auction
     private final ConcurrentHashMap<String, LocalDateTime> lastBidTime = new ConcurrentHashMap<>();
-
     // Tạo phiên đấu giá
     @PostMapping("/create")
-    public ResponseEntity<?> createAuction(
+    public ResponseEntity<AuctionResponse> createAuction(
             @RequestBody AuctionRequest request,
             Principal principal
     ) {
-        try {
-            Auction newAuction = auctionService.createAuction(request, principal.getName());
-            AuctionResponse responsePayload = AuctionResponse.fromEntity(newAuction);
-            messagingTemplate.convertAndSend("/topic/auctions/", responsePayload);
-            return ResponseEntity.ok(responsePayload);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
+        Auction newAuction = auctionService.createAuction(request, principal.getName());
+        AuctionResponse responsePayload = AuctionResponse.fromEntity(newAuction);
+        messagingTemplate.convertAndSend("/topic/auctions/", responsePayload);
+        return ResponseEntity.ok(responsePayload);
     }
 
-    // API đấu giá — có rate limiting
+    // API đấu giá
     @PostMapping("/{id}/bid")
-    public ResponseEntity<?> placeBid(
-            @PathVariable Long id,
-            @RequestParam BigDecimal amount,
-            Principal principal
+    public ResponseEntity<AuctionResponse> placeBid(
+                                                     @PathVariable Long id,
+                                                     @RequestParam BigDecimal amount,
+                                                     Principal principal
     ) {
-        // Rate limiting: chặn bid quá nhanh (< 2 giây)
-        String key = principal.getName() + ":" + id;
-        LocalDateTime last = lastBidTime.get(key);
-        if (last != null && ChronoUnit.MILLIS.between(last, LocalDateTime.now()) < 2000) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Bạn đặt giá quá nhanh! Vui lòng đợi 2 giây."));
-        }
-        lastBidTime.put(key, LocalDateTime.now());
-
-        try {
-            Auction updatedAuction = auctionService.placeBid(id, amount, principal.getName());
-            AuctionResponse responsePayload = AuctionResponse.fromEntity(updatedAuction);
-            messagingTemplate.convertAndSend("/topic/auction/" + id, responsePayload);
-            return ResponseEntity.ok(responsePayload);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
+        Auction updatedAuction = auctionService.placeBid(id, amount , principal.getName());
+        AuctionResponse responsePayload = AuctionResponse.fromEntity(updatedAuction);
+        messagingTemplate.convertAndSend("/topic/auction/" + id, responsePayload);
+        return ResponseEntity.ok(responsePayload);
     }
 
     // Lấy toàn bộ phiên đấu giá
@@ -93,33 +71,42 @@ public class AuctionController {
 
     @GetMapping("/search")
     public ResponseEntity<List<AuctionResponse>> searchAuctions(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) AuctionStatus status) {
-        List<Auction> auctions = auctionRepository.searchAuctions(keyword, status);
-        return ResponseEntity.ok(auctions.stream().map(AuctionResponse::fromEntity).toList());
-    }
+                                                                 @RequestParam(required = false) String keyword,
+                                                                 @RequestParam(required = false) AuctionStatus status) {
 
+        List<Auction> auctions = auctionRepository.searchAuctions(keyword, status );
+        List<AuctionResponse> response = auctions.stream()
+                .map(AuctionResponse::fromEntity)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
     @GetMapping("/owner")
     public List<AuctionResponse> getMyAuctions() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return auctionRepository.findBySellerUsername(username)
-                .stream().map(AuctionResponse::fromEntity).toList();
+                .stream()
+                .map(AuctionResponse::fromEntity)
+                .toList();
     }
 
     @GetMapping("/won")
     public List<AuctionResponse> getAuctionsIWon() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return auctionRepository.findByStatusAndWinnerUsername(AuctionStatus.CLOSED, username)
-                .stream().map(AuctionResponse::fromEntity).toList();
+                .stream()
+                .map(AuctionResponse::fromEntity)
+                .toList();
     }
 
     @GetMapping("/participated")
     public List<AuctionResponse> getAuctionsIParticipated() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return auctionRepository.findParticipatedAuctions(username)
-                .stream().map(AuctionResponse::fromEntity).toList();
+                .stream()
+                .map(AuctionResponse::fromEntity)
+                .toList();
     }
-
     @PostMapping("/{id}/buy-now")
     public ResponseEntity<?> buyNowAuction(
             @PathVariable Long id,
@@ -130,27 +117,30 @@ public class AuctionController {
             AuctionResponse responsePayload = AuctionResponse.fromEntity(updatedAuction);
             messagingTemplate.convertAndSend("/topic/auction/" + id, responsePayload);
             messagingTemplate.convertAndSend("/topic/auctions/", responsePayload);
+
             return ResponseEntity.ok(responsePayload);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
-
     @GetMapping("/{id}/recommendations")
     public ResponseEntity<List<AuctionResponse>> getRecommendations(@PathVariable Long id) {
-        return ResponseEntity.ok(
-                auctionService.getRecommendations(id).stream()
-                        .map(AuctionResponse::fromEntity).toList()
-        );
+        List<AuctionResponse> responses = auctionService.getRecommendations(id)
+                .stream()
+                .map(AuctionResponse::fromEntity)
+                .toList();
+        return ResponseEntity.ok(responses);
     }
-
     @GetMapping("/category/{category}")
     public ResponseEntity<List<AuctionResponse>> getAuctionsByCategory(@PathVariable String category) {
         try {
             Category catEnum = Category.valueOf(category.toUpperCase());
-            List<Auction> auctions = auctionRepository
-                    .findByCategoryAndStatusOrderByStartTimeDesc(catEnum, AuctionStatus.OPEN);
-            return ResponseEntity.ok(auctions.stream().map(AuctionResponse::fromEntity).toList());
+            List<Auction> auctions = auctionRepository.findByCategoryAndStatusOrderByStartTimeDesc(catEnum, AuctionStatus.OPEN);
+            List<AuctionResponse> responses = auctions.stream()
+                    .map(AuctionResponse::fromEntity)
+                    .toList();
+
+            return ResponseEntity.ok(responses);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
