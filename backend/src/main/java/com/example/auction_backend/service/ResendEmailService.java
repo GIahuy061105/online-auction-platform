@@ -11,7 +11,7 @@ import java.net.http.HttpResponse;
 @Service
 public class ResendEmailService {
 
-    @Value("${resend.api-key}")
+    @Value("${SPRING_MAIL_PASSWORD}")
     private String resendApiKey;
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
