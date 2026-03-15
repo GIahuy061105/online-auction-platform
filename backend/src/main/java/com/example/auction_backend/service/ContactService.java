@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 public class ContactService {
-    private final ResendEmailService emailService;
+    private final ResendEmailService emailService; // ← thay JavaMailSender
     private final ConcurrentHashMap<String, LocalDateTime> ipBlockMap = new ConcurrentHashMap<>();
 
     public void sendContactMessage(ContactRequest request, HttpServletRequest httpRequest) {

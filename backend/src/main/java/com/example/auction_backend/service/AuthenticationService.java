@@ -21,7 +21,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final ResendEmailService emailService;
+    private final ResendEmailService emailService; // ← thay JavaMailSender
 
     public AuthResponse register(RegisterRequest request) {
         var user = User.builder()
