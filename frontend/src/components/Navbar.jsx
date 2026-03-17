@@ -163,8 +163,18 @@ const Navbar = () => {
                                 </Badge>
                                 <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
                                     <div className="navbar-avatar-wrapper">
-                                        <Avatar size={32} icon={<UserOutlined />}
-                                            style={{ background: 'linear-gradient(135deg, #0d7a76, #0ea5a0)', flexShrink: 0 }} />
+                                        <Avatar
+                                            size={32}
+                                            src={userProfile?.avatarUrl || undefined}
+                                            icon={!userProfile?.avatarUrl && <UserOutlined />}
+                                            style={{
+                                                background: userProfile?.avatarUrl
+                                                    ? 'transparent'
+                                                    : 'linear-gradient(135deg, #0d7a76, #0ea5a0)',
+                                                flexShrink: 0,
+                                                objectFit: 'cover'
+                                            }}
+                                        />
                                         <span className="navbar-username">{userProfile?.username || '...'}</span>
                                     </div>
                                 </Dropdown>
