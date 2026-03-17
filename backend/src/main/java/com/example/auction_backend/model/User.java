@@ -40,6 +40,9 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
     @Column (name = "phonenumber")
     private String phoneNumber;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @Column(nullable = false)
     private BigDecimal balance;
 
@@ -75,7 +78,6 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Tạm thời trả về quyền USER cho tất cả mọi người
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
@@ -90,22 +92,14 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
     }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return true; // Quan trọng: Phải là true
-    }
+    public boolean isAccountNonExpired() {return true;}
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true; // Quan trọng: Phải là true
-    }
+    public boolean isAccountNonLocked() {return true;}
 
     @Override
-    public boolean isCredentialsNonExpired() {
-        return true; // Quan trọng: Phải là true
-    }
+    public boolean isCredentialsNonExpired() {return true;}
 
     @Override
-    public boolean isEnabled() {
-        return true; // Quan trọng: Phải là true
-    }
+    public boolean isEnabled() {return true;}
 }

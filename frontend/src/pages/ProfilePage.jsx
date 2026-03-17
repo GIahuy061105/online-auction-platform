@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Form, Input, message, Spin } from 'antd';
-import { UserOutlined, PhoneOutlined, SaveOutlined, EditOutlined, CloseOutlined, MailOutlined, WalletOutlined } from '@ant-design/icons';
+import { UserOutlined, PhoneOutlined, SaveOutlined, EditOutlined, CloseOutlined, MailOutlined, WalletOutlined, CameraOutlined } from '@ant-design/icons';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import AddressManager from '../components/AddressManager';
@@ -12,9 +12,11 @@ const formatCurrency = (amount) =>
 const ProfilePage = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [user, setUser] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [form] = Form.useForm();
+    const fileInputRef = useRef(null);
 
     const fetchProfile = async () => {
         try {
@@ -45,6 +47,43 @@ const ProfilePage = () => {
         }
     };
 
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file
+        const isImage = file.type.startsWith('image/');
+        if (!isImage) {
+            message.error('Chỉ được upload file ảnh!');
+            return;
+        }
+        const isLt5M = file.size / 1024 / 1024 < 5;
+        if (!isLt5M) {
+            message.error('Ảnh phải nhỏ hơn 5MB!');
+            return;
+        }
+
+        setUploadingAvatar(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await api.post('/users/avatar', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setUser(prev => ({ ...prev, avatarUrl: response.data.avatarUrl }));
+            message.success('Cập nhật ảnh đại diện thành công! 🎉');
+        } catch (error) {
+            message.error('Upload ảnh thất bại!');
+        } finally {
+            setUploadingAvatar(false);
+            e.target.value = '';
+        }
+    };
+
     const getInitials = (username) => username ? username.slice(0, 2).toUpperCase() : '??';
 
     if (loading) return (
@@ -67,7 +106,15 @@ const ProfilePage = () => {
                 .profile-hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(14,165,160,0.15) 0%, transparent 70%); border-radius: 50%; }
                 .profile-hero::after { content: ''; position: absolute; bottom: -40px; left: 30%; width: 140px; height: 140px; background: radial-gradient(circle, rgba(14,165,160,0.08) 0%, transparent 70%); border-radius: 50%; }
 
-                .avatar-ring { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg,#0d7a76,#0ea5a0); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: white; flex-shrink: 0; box-shadow: 0 0 0 4px rgba(14,165,160,0.3), 0 8px 24px rgba(14,165,160,0.4); position: relative; z-index: 1; }
+                /* AVATAR */
+                .avatar-wrapper { position: relative; flex-shrink: 0; cursor: pointer; z-index: 1; }
+                .avatar-ring { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg,#0d7a76,#0ea5a0); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: white; box-shadow: 0 0 0 4px rgba(14,165,160,0.3), 0 8px 24px rgba(14,165,160,0.4); overflow: hidden; }
+                .avatar-ring img { width: 100%; height: 100%; object-fit: cover; }
+                .avatar-overlay { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; gap: 2px; }
+                .avatar-wrapper:hover .avatar-overlay { opacity: 1; }
+                .avatar-overlay span { color: white; font-size: 18px; }
+                .avatar-overlay p { color: white; font-size: 10px; font-weight: 600; margin: 0; }
+                .avatar-loading { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
 
                 .hero-info { flex: 1; position: relative; z-index: 1; }
                 .hero-username { font-size: 24px; font-weight: 800; color: white; margin: 0 0 4px; }
@@ -81,7 +128,6 @@ const ProfilePage = () => {
                 .info-card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 2px 16px rgba(14,165,160,0.08); border: 1px solid rgba(14,165,160,0.08); }
                 .card-title { font-size: 16px; font-weight: 700; color: #0d7a76; margin: 0 0 20px; display: flex; align-items: center; gap: 8px; }
 
-                /* VIEW MODE */
                 .info-row { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #f3f4f6; gap: 14px; }
                 .info-row:last-of-type { border-bottom: none; }
                 .info-icon-wrap { width: 40px; height: 40px; border-radius: 10px; background: rgba(14,165,160,0.08); display: flex; align-items: center; justify-content: center; font-size: 16px; color: #0d7a76; flex-shrink: 0; }
@@ -92,7 +138,6 @@ const ProfilePage = () => {
                 .edit-btn { display: flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 12px; border: 1.5px solid rgba(14,165,160,0.3); background: white; color: #0d7a76; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Be Vietnam Pro',sans-serif; margin-top: 20px; }
                 .edit-btn:hover { background: #f0fffe; border-color: #0ea5a0; transform: translateY(-1px); }
 
-                /* FORM MODE */
                 .form-title { font-size: 16px; font-weight: 700; color: #0d7a76; margin: 0 0 20px; display: flex; align-items: center; gap: 8px; }
                 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
 
@@ -107,9 +152,17 @@ const ProfilePage = () => {
                 .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper-focused { border-color: #0ea5a0 !important; box-shadow: 0 0 0 2px rgba(14,165,160,0.1) !important; }
                 .ant-form-item-label > label { font-weight: 600; color: #374151; }
 
-                /* ADDRESS SECTION */
                 .address-wrap { border-radius: 20px; overflow: hidden; box-shadow: 0 2px 16px rgba(14,165,160,0.08); border: 1px solid rgba(14,165,160,0.08); }
             `}</style>
+
+            {/* Hidden file input */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                accept="image/*"
+                style={{ display: 'none' }}
+            />
 
             <div className="profile-page">
                 <Navbar />
@@ -117,7 +170,25 @@ const ProfilePage = () => {
 
                     {/* HERO */}
                     <div className="profile-hero">
-                        <div className="avatar-ring">{getInitials(user?.username)}</div>
+                        <div className="avatar-wrapper" onClick={handleAvatarClick} title="Đổi ảnh đại diện">
+                            <div className="avatar-ring">
+                                {user?.avatarUrl
+                                    ? <img src={user.avatarUrl} alt="avatar" />
+                                    : getInitials(user?.username)
+                                }
+                            </div>
+                            {uploadingAvatar ? (
+                                <div className="avatar-loading">
+                                    <Spin size="small" />
+                                </div>
+                            ) : (
+                                <div className="avatar-overlay">
+                                    <CameraOutlined style={{ color: 'white', fontSize: 18 }} />
+                                    <p>Đổi ảnh</p>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="hero-info">
                             <h2 className="hero-username">{user?.username}</h2>
                             <p className="hero-email"><MailOutlined /> {user?.email}</p>
@@ -136,7 +207,6 @@ const ProfilePage = () => {
                         {!isEditing ? (
                             <>
                                 <h3 className="card-title"><UserOutlined /> Thông tin cá nhân</h3>
-
                                 <div className="info-row">
                                     <div className="info-icon-wrap"><UserOutlined /></div>
                                     <div>
@@ -146,7 +216,6 @@ const ProfilePage = () => {
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="info-row">
                                     <div className="info-icon-wrap"><PhoneOutlined /></div>
                                     <div>
@@ -156,7 +225,6 @@ const ProfilePage = () => {
                                         </div>
                                     </div>
                                 </div>
-
                                 <button className="edit-btn" onClick={() => setIsEditing(true)}>
                                     <EditOutlined /> Chỉnh sửa thông tin
                                 </button>
@@ -190,7 +258,6 @@ const ProfilePage = () => {
                     <div className="address-wrap">
                         <AddressManager />
                     </div>
-
                 </div>
                 <AppFooter />
             </div>
