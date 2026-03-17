@@ -12,6 +12,7 @@ import MyWishListPage from './pages/MyWishListPage';
 import InfoPage from './pages/InfoPage';
 import ContactPage from './pages/ContactPage';
 import DepositPage from './pages/DepositPage';
+import NotFoundPage from './pages/NotFoundPage';
 import {INFO_ROUTES_DATA} from './components/InfoRoutes';
 
 function App() {
@@ -60,7 +61,10 @@ function App() {
               <Route path="/my-wishlist" element={<MyWishListPage />} />
               {/* Route xem trang nạp tiền */}
               <Route path="/deposit" element={<DepositPage />} />
+              {/* Route liên hệ */}
               <Route path="/users/contact" element={<ContactPage />} />
+              {/* Route trang lỗi */}
+              <Route path="*" element={<NotFoundPage />} />
               {INFO_ROUTES_DATA.map((item) => (
                 <Route
                   key={item.path}

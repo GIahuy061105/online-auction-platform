@@ -395,7 +395,7 @@ cd frontend && vercel --prod
 
 ### Database (Supabase)
 1. Tạo project → Settings → Database
-2. Copy Connection String (port 6543) + thêm `?prepareThreshold=0`
+2. Copy Connection String (port 5432) + thêm `?prepareThreshold=0`
 
 ---
 
