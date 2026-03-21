@@ -55,7 +55,7 @@ SDKAuction là nền tảng đấu giá trực tuyến được xây dựng vớ
 
 ```
 ┌─────────────────────┐     HTTPS      ┌─────────────────────┐
-│   Frontend (Vercel) │ ─────────────► │  Backend (Railway)  │
+│   Frontend (Vercel) │ ─────────────► │  Backend (Render)   │
 │   React + Vite      │                │  Spring Boot 4.0    │
 │   Ant Design        │ ◄───────────── │  Java 21            │
 └─────────────────────┘   REST + WS    └──────────┬──────────┘
@@ -71,8 +71,8 @@ SDKAuction là nền tảng đấu giá trực tuyến được xây dựng vớ
 | Service | URL |
 |---------|-----|
 | Frontend | https://sdkauction.vercel.app |
-| Backend API | https://sdkauction.up.railway.app/api |
-| WebSocket | https://sdkauction.up.railway.app/ws |
+| Backend API | https://online-auction-platform-fd3n.onrender.com/api |
+| WebSocket | https://online-auction-platform-fd3n.onrender.com/ws |
 
 ---
 
@@ -82,6 +82,7 @@ SDKAuction là nền tảng đấu giá trực tuyến được xây dựng vớ
 - ✅ Đăng ký / Đăng nhập bằng JWT
 - ✅ Quên mật khẩu qua email OTP
 - ✅ Hồ sơ cá nhân (họ tên, số điện thoại, địa chỉ giao hàng)
+- ✅ Upload ảnh đại diện
 - ✅ Ví điện tử — nạp tiền qua VNPay
 - ✅ Danh sách yêu thích
 - ✅ Lịch sử hoạt động (đấu giá, mua bán)
@@ -150,12 +151,12 @@ SDKAuction là nền tảng đấu giá trực tuyến được xây dựng vớ
 | Service | Mục đích |
 |---------|----------|
 | Vercel | Frontend hosting |
-| Railway | Backend hosting |
+| Render | Backend hosting (free tier) |
 | Supabase | PostgreSQL database |
 | Cloudinary | Lưu trữ ảnh/video |
 | VNPay Sandbox | Payment gateway |
 | Resend | Email service |
-| UptimeRobot | Server monitoring |
+| UptimeRobot | Server monitoring (chống ngủ) |
 
 ---
 
@@ -206,7 +207,7 @@ cloudinary.cloud-name=${CLOUDINARY_CLOUD_NAME}
 cloudinary.api-key=${CLOUDINARY_API_KEY}
 cloudinary.api-secret=${CLOUDINARY_API_SECRET}
 
-spring.mail.password=${SPRING_MAIL_PASSWORD}  # Resend API key
+spring.mail.password=${SPRING_MAIL_PASSWORD}
 
 VNPAY_TMN_CODE=${VNPAY_TMN_CODE}
 VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
@@ -217,20 +218,21 @@ VNPAY_RETURN_URL=${VNPAY_RETURN_URL}
 ### Frontend — `.env.production`
 
 ```env
-VITE_API_URL=https://sdkauction.up.railway.app/api
-VITE_WS_URL=https://sdkauction.up.railway.app
+VITE_API_URL=https://online-auction-platform-fd3n.onrender.com/api
+VITE_WS_URL=https://online-auction-platform-fd3n.onrender.com
 ```
 
-### Railway Environment Variables
+### Render Environment Variables
 
 | Biến | Mô tả |
 |------|-------|
-| `SPRING_DATASOURCE_URL` | JDBC URL của Supabase |
+| `SPRING_DATASOURCE_URL` | JDBC URL của Supabase (port 6543) |
 | `SPRING_DATASOURCE_USERNAME` | Username database |
 | `SPRING_DATASOURCE_PASSWORD` | Password database |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
 | `CLOUDINARY_API_KEY` | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret |
+| `SPRING_MAIL_USERNAME` | `resend` |
 | `SPRING_MAIL_PASSWORD` | Resend API key (`re_xxx`) |
 | `VNPAY_TMN_CODE` | Mã merchant VNPay |
 | `VNPAY_HASH_SECRET` | Secret key VNPay |
@@ -333,7 +335,6 @@ VITE_WS_URL=https://sdkauction.up.railway.app
 
 - Vào **"Liên hệ"** trên Navbar
 - Điền form → Click **"Gửi tin nhắn"**
-- Hệ thống gửi email trực tiếp đến admin
 
 ---
 
@@ -352,6 +353,7 @@ VITE_WS_URL=https://sdkauction.up.railway.app
 |--------|----------|-------|------|
 | GET | `/api/users/my-profile` | Thông tin cá nhân | ✅ |
 | PUT | `/api/users/update` | Cập nhật hồ sơ | ✅ |
+| POST | `/api/users/avatar` | Upload avatar | ✅ |
 | POST | `/api/users/contact` | Gửi liên hệ | ✅ |
 
 ### Auctions
@@ -388,14 +390,26 @@ npm i -g vercel
 cd frontend && vercel --prod
 ```
 
-### Backend (Railway)
-1. Connect GitHub → set Root Directory: `backend`
-2. Thêm Environment Variables
-3. Railway tự build và deploy
+**Vercel Environment Variables:**
+```env
+VITE_API_URL=https://online-auction-platform-fd3n.onrender.com/api
+VITE_WS_URL=https://online-auction-platform-fd3n.onrender.com
+```
+
+### Backend (Render)
+1. Tạo Web Service tại [render.com](https://render.com)
+2. Connect GitHub repo
+3. Dockerfile Path: `Dockerfile` (ở root repo)
+4. Thêm Environment Variables
+5. Render tự build và deploy
+
+> ⚠️ **Lưu ý:** Render free tier ngủ sau 15 phút không có request.
+> Dùng UptimeRobot ping `/api/ping` mỗi 5 phút để tránh ngủ.
 
 ### Database (Supabase)
 1. Tạo project → Settings → Database
-2. Copy Connection String (port 5432) + thêm `?prepareThreshold=0`
+2. Copy Connection String (Transaction mode, port 6543)
+3. Thêm `?prepareThreshold=0` vào cuối URL
 
 ---
 
