@@ -11,7 +11,7 @@ public class KeepAliveScheduler {
     public void keepAlive() {
         try {
             new RestTemplate().getForObject(
-                    "https://sdkauction.up.railway.app/api/auctions",
+                    "https://online-auction-platform-fd3n.onrender.com/api/auctions",
                     String.class
             );
         } catch (Exception e) {
