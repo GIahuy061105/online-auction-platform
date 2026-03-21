@@ -14,7 +14,6 @@ public class KeepAliveScheduler {
                     "https://sdkauction.up.railway.app/api/auctions",
                     String.class
             );
-            System.out.println("Keep-alive ping OK");
         } catch (Exception e) {
             System.out.println("Keep-alive ping failed: " + e.getMessage());
         }
