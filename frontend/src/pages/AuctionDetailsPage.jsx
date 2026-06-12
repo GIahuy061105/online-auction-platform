@@ -93,7 +93,7 @@ const AuctionDetailPage = () => {
                     content: error.response.data.message,
                     okText: 'Nạp thêm tiền',
                     cancelText: 'Để sau',
-                    onOk() { navigate('/deposit'); } // Đổi route phù hợp với app của bạn
+                    onOk() { navigate('/deposit'); }
                 });
             } else {
                 message.error(error.response?.data?.message || 'Thanh toán thất bại!');
@@ -110,7 +110,7 @@ const AuctionDetailPage = () => {
         fetchRecommendations();
         checkWishlistStatus();
         const client = new Client({
-            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL || 'https://sdkauction.up.railway.app'}/ws`),
+            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL || 'https://online-auction-platform-fd3n.onrender.com'}/ws`),
             onConnect: () => {
                 client.subscribe(`/topic/auction/${id}`, (msg) => {
                     setAuction(JSON.parse(msg.body));

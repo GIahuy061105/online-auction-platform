@@ -71,7 +71,7 @@ const AuctionListPage = () => {
 
     useEffect(() => {
         const client = new Client({
-            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL || 'https://sdkauction.up.railway.app'}/ws`),
+            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL || 'https://online-auction-platform-fd3n.onrender.com'}/ws`),
                 connectHeaders: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
                     },
