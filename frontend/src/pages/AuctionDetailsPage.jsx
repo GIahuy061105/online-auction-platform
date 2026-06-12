@@ -24,6 +24,7 @@ const AuctionDetailPage = () => {
     const [isLiked, setIsLiked] = useState(false);
     const [recommendations, setRecommendations] = useState([]);
     const [userProfile, setUserProfile] = useState(null);
+    const [userAddresses, setUserAddresses] = useState([]);
     const isVideo = (url) => url && url.match(/\.(mp4|webm|ogg|mov)$/i);
     const currentIndex = auction?.imageUrls ? auction.imageUrls.indexOf(selectedMedia) : 0;
     const deadline = auction ? new Date(auction.endTime).getTime() : 0;
@@ -205,14 +206,16 @@ const AuctionDetailPage = () => {
         } catch (error) { }
     };
     useEffect(() => {
-        const fetchProfile = async () => {
+        const fetchProfileData = async () => {
             if (!localStorage.getItem('token')) return;
-            try {
-                const res = await api.get('/users/my-profile');
-                setUserProfile(res.data);
-            } catch (e) {}
-        };
-        fetchProfile();
+                try {
+                    const resProfile = await api.get('/users/my-profile');
+                    setUserProfile(resProfile.data);
+                    const resAddress = await api.get('/users/addresses');
+                    setUserAddresses(resAddress.data);
+                } catch (e) {}
+            };
+        fetchProfileData();
     }, []);
     const checkProfile = () => {
         if (!userProfile?.fullName || !userProfile?.phoneNumber) {
@@ -232,24 +235,24 @@ const AuctionDetailPage = () => {
             });
             return false;
         }
-        if (!userProfile?.addresses || userProfile.addresses.length === 0) {
+        if (!userAddresses || userAddresses.length === 0) {
             message.warning({
                 content: (
                     <span>
                         Bạn cần thêm <b>địa chỉ giao hàng</b>!{' '}
-                        <span
-                            onClick={() => navigate('/profile')}
-                            style={{ color: '#0ea5a0', cursor: 'pointer', textDecoration: 'underline' }}
-                        >
-                            Thêm địa chỉ ngay
-                        </span>
+                    <span
+                    onClick={() => navigate('/profile')}
+                    style={{ color: '#0ea5a0', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                    Thêm địa chỉ ngay
                     </span>
-                ),
-                duration: 5,
+                    </span>
+            ),
+            duration: 5,
             });
-            return false;
+        return false;
         }
-        return true;
+    return true;
     };
     if (loading) return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f0fffe', gap: 16 }}>
