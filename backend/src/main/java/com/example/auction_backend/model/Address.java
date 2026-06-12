@@ -24,8 +24,8 @@ public class Address {
     @JsonProperty("isDefault")
     private boolean isDefault;    // Địa chỉ mặc định
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore // Tránh vòng lặp vô tận khi convert JSON
     private User user;
 }

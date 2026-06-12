@@ -155,4 +155,14 @@ public class AuctionController {
             return ResponseEntity.badRequest().build();
         }
     }
+    @PostMapping("/{id}/lock-deposit")
+    public ResponseEntity<?> lockDeposit(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            String message = auctionService.lockDeposit(id, username);
+            return ResponseEntity.ok(Map.of("status", "success", "message", message));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
 }

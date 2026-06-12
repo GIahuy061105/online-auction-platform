@@ -135,15 +135,34 @@ const AuctionDetailPage = () => {
             fetchAuctionDetail();
         } catch (error) {
             const errorMsg = error.response?.data?.message || '';
-            if (errorMsg.includes('phải đặt cọc trước') || errorMsg.includes('Số dư không đủ')) {
+            if (errorMsg.includes('phải đặt cọc trước')) {
                 confirm({
-                    title: 'Yêu cầu Đặt cọc',
-                    content: `Bạn cần đặt cọc ${formatCurrency(auction.depositAmount || 0)} để tham gia phiên này. Số dư hiện tại không đủ.`,
-                    okText: 'Nạp tiền ngay',
-                    cancelText: 'Hủy',
-                    onOk() { navigate('/deposit'); }
+                    title: 'Yêu cầu Khóa Cọc',
+                    content: `Bạn cần đóng ${formatCurrency(auction.depositAmount || 0)} tiền cọc để tham gia phiên này. Hệ thống sẽ trích tiền từ ví của bạn. Số tiền này sẽ được HOÀN LẠI nếu bạn không trúng đấu giá.`,
+                    okText: 'Đồng ý khóa cọc',
+                    cancelText: 'Hủy bỏ',
+                    async onOk() {
+                        try {
+                            await api.post(`/auctions/${id}/lock-deposit`);
+                            message.success('✅ Khóa cọc thành công! Vui lòng bấm Đặt giá lại.');
+                            fetchProfile();
+                        } catch (depErr) {
+                            if (depErr.response?.data?.message === 'INSUFFICIENT_BALANCE') {
+                                confirm({
+                                    title: 'Ví không đủ tiền',
+                                    content: `Số dư ví của bạn không đủ ${formatCurrency(auction.depositAmount || 0)}. Vui lòng nạp thêm tiền qua VNPAY.`,
+                                    okText: 'Nạp tiền ngay',
+                                    cancelText: 'Để sau',
+                                    onOk() { navigate('/deposit'); }
+                                });
+                            } else {
+                                message.error(depErr.response?.data?.message || 'Lỗi khóa cọc!');
+                            }
+                        }
+                    }
                 });
-            } else {
+            }
+            else {
                 message.error(errorMsg || 'Đấu giá thất bại');
             }
         } finally {

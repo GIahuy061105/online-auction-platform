@@ -307,4 +307,42 @@ public class AuctionService {
 
         return "Thanh toán thành công! Người bán đã nhận được thông báo để giao hàng.";
     }
+    @Transactional
+    public String lockDeposit(Long auctionId, String username) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
+
+        if (auction.getStatus() != AuctionStatus.OPEN) {
+            throw new RuntimeException("Phiên đấu giá không ở trạng thái mở!");
+        }
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        // 1. Kiểm tra xem đã cọc chưa
+        boolean alreadyDeposited = depositRepository.existsByUserAndAuctionAndStatus(user, auction, "LOCKED");
+        if (alreadyDeposited) {
+            return "Bạn đã đặt cọc cho phiên này rồi!";
+        }
+
+        // 2. Kiểm tra số dư ví
+        if (user.getBalance().compareTo(auction.getDepositAmount()) < 0) {
+            throw new RuntimeException("INSUFFICIENT_BALANCE");
+        }
+
+        // 3. Trừ tiền ví
+        user.setBalance(user.getBalance().subtract(auction.getDepositAmount()));
+        userRepository.save(user);
+
+        // 4. Lưu lịch sử cọc
+        com.example.auction_backend.model.AuctionDeposit deposit = new com.example.auction_backend.model.AuctionDeposit();
+        deposit.setUser(user);
+        deposit.setAuction(auction);
+        deposit.setAmount(auction.getDepositAmount());
+        deposit.setStatus("LOCKED");
+        deposit.setCreatedAt(LocalDateTime.now());
+        depositRepository.save(deposit);
+
+        return "Khóa cọc thành công! Bạn đã có thể trả giá.";
+    }
 }
