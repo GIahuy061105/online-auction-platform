@@ -29,8 +29,9 @@ const AuctionDetailPage = () => {
     const currentIndex = auction?.imageUrls ? auction.imageUrls.indexOf(selectedMedia) : 0;
     const deadline = auction ? new Date(auction.endTime).getTime() : 0;
     const isOpen = auction?.status === 'OPEN';
-    const minBid = auction ? auction.currentPrice + auction.stepPrice : 0;
+    const minBid = auction ? Number(auction.currentPrice) + Number(auction.stepPrice) : 0;
     const { confirm } = Modal;
+    const [form] = Form.useForm();
     const [isAwaitingPayment, setIsAwaitingPayment] = useState(false);
     useEffect(() => {
         const activeThumb = document.getElementById(`thumb-${currentIndex}`);
@@ -768,23 +769,26 @@ const AuctionDetailPage = () => {
                                                 <span style={{ color: '#ef4444', fontWeight: 700 }}>{formatCurrency(minBid)}</span>
                                             </div>
                                         </div>
-
-                                        <Form layout="vertical" onFinish={handleBid} initialValues={{ amount: minBid }}>
-                                            <Form.Item name="amount"
-                                                rules={[
-                                                    { required: true, message: 'Vui lòng nhập số tiền!' },
-                                                    { type: 'number', min: minBid, message: `Phải ít nhất ${formatCurrency(minBid)}!` }
-                                                ]}>
-                                                <Space.Compact style={{ width: '100%' }}>
+                                            <Form form={form} layout="vertical" onFinish={handleBid} initialValues={{ amount: minBid }}>
+                                                <Form.Item name="amount"
+                                                    rules={[
+                                                        { required: true, message: 'Vui lòng nhập số tiền!' },
+                                                        () => ({
+                                                            validator(_, value) {
+                                                                if (!value) return Promise.reject(new Error('Vui lòng nhập số tiền!'));
+                                                                if (Number(value) < minBid) return Promise.reject(new Error(`Phải ít nhất ${formatCurrency(minBid)}!`));
+                                                                return Promise.resolve();
+                                                                }
+                                                            })
+                                                        ]}>
                                                     <InputNumber
-                                                        style={{ width: '100%' }}
-                                                        size="large"
-                                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                                        parser={value => value?.replace(/\$\s?|(,*)/g, '')}
+                                                    style={{ width: '100%' }}
+                                                    size="large"
+                                                    addonAfter={<span style={{ fontWeight: 700, color: '#0d7a76' }}>₫</span>}
+                                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                                    parser={value => value?.replace(/\$\s?|(,*)/g, '')}
                                                     />
-                                                    <Button size="large" disabled style={{ backgroundColor: '#f0fffe', color: '#0d7a76', borderColor: 'rgba(14,165,160,0.2)', fontWeight: 700 }}>₫</Button>
-                                                </Space.Compact>
-                                            </Form.Item>
+                                                </Form.Item>
 
                                             <Form.Item style={{ marginBottom: 0 }}>
                                                 <button type="submit" className="bid-submit-btn" disabled={bidding}>
