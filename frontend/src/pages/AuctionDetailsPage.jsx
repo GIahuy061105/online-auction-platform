@@ -109,8 +109,13 @@ const AuctionDetailPage = () => {
         fetchAuctionDetail();
         fetchRecommendations();
         checkWishlistStatus();
+        const token = localStorage.getItem('token');
+        if (!token) return;
         const client = new Client({
             webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL || 'https://online-auction-platform-fd3n.onrender.com'}/ws`),
+            connectHeaders: {
+                Authorization: `Bearer ${token}`
+            },
             onConnect: () => {
                 client.subscribe(`/topic/auction/${id}`, (msg) => {
                     setAuction(JSON.parse(msg.body));

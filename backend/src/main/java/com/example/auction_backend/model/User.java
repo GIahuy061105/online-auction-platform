@@ -56,7 +56,7 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
 
 
     // Địa chỉ giao hàng
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL ,fetch = FetchType.EAGER)
     private List<Address> addresses;
     @JsonIgnore
     public Address getDefaultAddress() {
