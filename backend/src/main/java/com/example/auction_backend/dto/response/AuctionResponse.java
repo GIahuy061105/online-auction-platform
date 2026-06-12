@@ -16,6 +16,7 @@ public class AuctionResponse {
     private String productName;
     private String description;
     private BigDecimal currentPrice;
+    private BigDecimal depositAmount;
     private BigDecimal startingPrice;
     private BigDecimal stepPrice;
     private LocalDateTime startTime;
@@ -46,6 +47,7 @@ public class AuctionResponse {
                 .productName(auction.getProductName())
                 .description(auction.getDescription())
                 .currentPrice(auction.getCurrentPrice())
+                .depositAmount(auction.getDepositAmount())
                 .startingPrice(auction.getStartingPrice())
                 .stepPrice(auction.getStepPrice())
                 .startTime(auction.getStartTime())
