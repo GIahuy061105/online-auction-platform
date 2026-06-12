@@ -1,5 +1,7 @@
 package com.example.auction_backend.model;
 
+import com.example.auction_backend.enums.DepositStatus;
+import com.example.auction_backend.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -27,9 +29,9 @@ public class AuctionDeposit {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    // Trạng thái cọc: LOCKED (Đang giữ), REFUNDED (Đã hoàn lại), CAPTURED (Đã tịch thu do thắng nhưng bom hàng / hoặc trừ thẳng vào giá mua)
-    @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deposit_status")
+    private DepositStatus depositStatus;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

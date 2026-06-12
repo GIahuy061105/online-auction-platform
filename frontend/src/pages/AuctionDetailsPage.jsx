@@ -84,12 +84,10 @@ const AuctionDetailPage = () => {
     const handleCheckout = async () => {
         setLoadingBuyNow(true);
         try {
-            await api.post(`/auctions/${id}/checkout`, {}, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+            await api.post(`/auctions/${id}/checkout`);
             message.success('Thanh toán thành công! Người bán chuẩn bị giao hàng.');
-            fetchAuctionDetail(); // Reload lại để mất nút thanh toán
-            fetchProfile(); // Cập nhật lại số dư trên Navbar
+            fetchAuctionDetail();
+            fetchProfile();
         } catch (error) {
             if (error.response?.data?.message?.includes("Số dư ví không đủ")) {
                 confirm({

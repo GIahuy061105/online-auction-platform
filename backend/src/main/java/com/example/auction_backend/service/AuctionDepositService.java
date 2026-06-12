@@ -1,5 +1,6 @@
 package com.example.auction_backend.service;
 
+import com.example.auction_backend.enums.DepositStatus;
 import com.example.auction_backend.model.Auction;
 import com.example.auction_backend.model.AuctionDeposit;
 import com.example.auction_backend.model.User;
@@ -46,7 +47,7 @@ public class AuctionDepositService {
                 .user(user)
                 .auction(auction)
                 .amount(auction.getDepositAmount())
-                .status("LOCKED")
+                .depositStatus(DepositStatus.LOCKED)
                 .createdAt(LocalDateTime.now())
                 .build();
         depositRepository.save(deposit);

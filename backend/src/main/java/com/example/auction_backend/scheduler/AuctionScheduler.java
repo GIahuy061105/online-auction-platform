@@ -4,6 +4,7 @@ import com.example.auction_backend.dto.response.AuctionResponse;
 import com.example.auction_backend.model.Address;
 import com.example.auction_backend.model.Auction;
 import com.example.auction_backend.enums.AuctionStatus;
+import com.example.auction_backend.enums.DepositStatus;
 import com.example.auction_backend.model.AuctionDeposit;
 import com.example.auction_backend.model.User;
 import com.example.auction_backend.repository.AuctionDepositRepository;
@@ -20,6 +21,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.example.auction_backend.enums.PaymentStatus.PENDING;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +53,7 @@ public class AuctionScheduler {
         if (!expiredAuctions.isEmpty()) {
             for (Auction auction : expiredAuctions) {
                 auction.setStatus(AuctionStatus.CLOSED);
-
+                auction.setPaymentStatus(PENDING);
                 User winner = auction.getWinner();
                 User seller = auction.getSeller();
                 BigDecimal finalPrice = auction.getCurrentPrice();
@@ -58,12 +61,12 @@ public class AuctionScheduler {
                 List<AuctionDeposit> deposits = depositRepository.findByAuction(auction);
                 for (AuctionDeposit deposit : deposits) {
                     if (winner != null && deposit.getUser().getId().equals(winner.getId())) {
-                        deposit.setStatus("AWAITING_PAYMENT");
+                        deposit.setDepositStatus(DepositStatus.AWAITING_PAYMENT);
                     } else {
                         User loser = deposit.getUser();
                         loser.setBalance(loser.getBalance().add(deposit.getAmount()));
                         userRepository.save(loser);
-                        deposit.setStatus("REFUNDED");
+                        deposit.setDepositStatus(DepositStatus.REFUNDED);
                         Map<String, Object> refundNotif = new HashMap<>();
                         refundNotif.put("title", "💸 Đã hoàn tiền cọc");
                         refundNotif.put("message", "Bạn đã được hoàn " + deposit.getAmount() + "đ từ phiên: " + auction.getProductName());

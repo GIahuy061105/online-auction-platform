@@ -2,6 +2,8 @@ package com.example.auction_backend.service;
 
 import com.example.auction_backend.dto.request.AuctionRequest;
 import com.example.auction_backend.enums.Category;
+import com.example.auction_backend.enums.DepositStatus;
+import com.example.auction_backend.enums.PaymentStatus;
 import com.example.auction_backend.model.*;
 import com.example.auction_backend.enums.AuctionStatus;
 import com.example.auction_backend.repository.AuctionDepositRepository;
@@ -215,8 +217,13 @@ public class AuctionService {
         seller.setBalance(seller.getBalance().add(auction.getBuyNowPrice()));
         userRepository.save(seller);
 
-        // Nếu đã cọc, chuyển trạng thái cọc thành CAPTURED (Đã dùng để thanh toán)
-        // (Trong thực tế bạn nên gọi DepositService để update, ở đây ghi chú logic)
+        if (hasLockedDeposit) {
+            AuctionDeposit deposit = depositRepository
+                    .findByUserAndAuction(buyer, auction)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin cọc"));
+            deposit.setDepositStatus(DepositStatus.COMPLETED);
+            depositRepository.save(deposit);
+        }
 
         // Lưu địa chỉ giao hàng
         Address defaultAddr = buyer.getDefaultAddress();
@@ -231,6 +238,7 @@ public class AuctionService {
         auction.setWinner(buyer);
         auction.setStatus(AuctionStatus.CLOSED);
         auction.setEndTime(LocalDateTime.now());
+        auction.setPaymentStatus(PaymentStatus.PAID);
         return auctionRepository.save(auction);
     }
 
@@ -263,11 +271,13 @@ public class AuctionService {
     public String payRemainingBalance(Long auctionId, String username) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
-
+        if (auction.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new RuntimeException(
+                    "Phiên đấu giá này đã được thanh toán rồi!");
+        }
         if (auction.getStatus() != AuctionStatus.CLOSED) {
             throw new RuntimeException("Phiên đấu giá chưa kết thúc!");
         }
-
         User winner = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
@@ -278,7 +288,7 @@ public class AuctionService {
         AuctionDeposit deposit = depositRepository.findByUserAndAuction(winner, auction)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin đặt cọc"));
 
-        if (!"AWAITING_PAYMENT".equals(deposit.getStatus())) {
+        if (deposit.getDepositStatus() != DepositStatus.AWAITING_PAYMENT) {
             throw new RuntimeException("Đơn hàng này đã được thanh toán hoặc trạng thái không hợp lệ!");
         }
 
@@ -287,6 +297,8 @@ public class AuctionService {
         if (winner.getBalance().compareTo(remainingAmount) < 0) {
             throw new RuntimeException("Số dư ví không đủ (" + winner.getBalance() + "đ). Vui lòng nạp thêm " + remainingAmount.subtract(winner.getBalance()) + "đ qua VNPAY để thanh toán.");
         }
+        deposit.setDepositStatus(DepositStatus.COMPLETED);
+        depositRepository.save(deposit);
 
         winner.setBalance(winner.getBalance().subtract(remainingAmount));
         userRepository.save(winner);
@@ -294,9 +306,6 @@ public class AuctionService {
         User seller = auction.getSeller();
         seller.setBalance(seller.getBalance().add(auction.getCurrentPrice()));
         userRepository.save(seller);
-
-        deposit.setStatus("COMPLETED");
-        depositRepository.save(deposit);
 
         Map<String, Object> sellerNotif = new HashMap<>();
         sellerNotif.put("title", "📦 Người mua đã thanh toán!");
@@ -339,7 +348,7 @@ public class AuctionService {
         deposit.setUser(user);
         deposit.setAuction(auction);
         deposit.setAmount(auction.getDepositAmount());
-        deposit.setStatus("LOCKED");
+        deposit.setDepositStatus(DepositStatus.LOCKED);
         deposit.setCreatedAt(LocalDateTime.now());
         depositRepository.save(deposit);
 
