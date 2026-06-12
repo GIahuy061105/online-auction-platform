@@ -165,4 +165,14 @@ public class AuctionController {
             return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
         }
     }
+    @PostMapping("/{id}/checkout")
+    public ResponseEntity<?> checkoutAuction(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            String message = auctionService.payRemainingBalance(id, username);
+            return ResponseEntity.ok(Map.of("status", "success", "message", message));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
 }
