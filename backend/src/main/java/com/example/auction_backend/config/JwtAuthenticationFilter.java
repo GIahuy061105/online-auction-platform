@@ -65,8 +65,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // Nếu token lỗi, in ra log và cứ cho request đi tiếp (để Security Config chặn sau)
-            // Đừng throw Exception ở đây sẽ gây lỗi 403/500 khó hiểu
+            System.out.println("DEBUG: Lỗi Filter: " + e.getMessage());
+            filterChain.doFilter(request, response);
             System.out.println("Lỗi JWT Filter: " + e.getMessage());
         }
         filterChain.doFilter(request, response);

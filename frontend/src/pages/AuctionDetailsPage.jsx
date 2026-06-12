@@ -120,11 +120,17 @@ const AuctionDetailPage = () => {
             connectHeaders: {
                 Authorization: `Bearer ${token}`
             },
+            reconnectDelay: 5000,
+            heartbeatIncoming: 4000,
+            heartbeatOutgoing: 4000,
             onConnect: () => {
                 client.subscribe(`/topic/auction/${id}`, (msg) => {
                     setAuction(JSON.parse(msg.body));
                 });
             },
+            onStompError: (frame) => {
+                console.error('Broker reported error: ' + frame.headers['message']);
+            }
         });
         client.activate();
         return () => { if (client.active) client.deactivate(); };
