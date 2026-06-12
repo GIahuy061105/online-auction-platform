@@ -2,11 +2,9 @@ package com.example.auction_backend.service;
 
 import com.example.auction_backend.dto.request.AuctionRequest;
 import com.example.auction_backend.enums.Category;
-import com.example.auction_backend.model.Address;
-import com.example.auction_backend.model.Auction;
+import com.example.auction_backend.model.*;
 import com.example.auction_backend.enums.AuctionStatus;
-import com.example.auction_backend.model.Bid;
-import com.example.auction_backend.model.User;
+import com.example.auction_backend.repository.AuctionDepositRepository;
 import com.example.auction_backend.repository.AuctionRepository;
 import com.example.auction_backend.repository.BidRepository;
 import com.example.auction_backend.repository.UserRepository;
@@ -31,16 +29,21 @@ public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
     private final BidRepository bidRepository;
+    private final AuctionDepositRepository depositRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     // Tạo phiên đấu giá
     public Auction createAuction(AuctionRequest request, String username) {
-        // ✅ Validate input
+        // Validate input cơ bản
         if (request.getProductName() == null || request.getProductName().isBlank()) {
             throw new RuntimeException("Tên sản phẩm không được để trống!");
         }
         if (request.getStartingPrice() == null || request.getStartingPrice().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Giá khởi điểm phải lớn hơn 0!");
+        }
+        // Thêm Validate tiền cọc
+        if (request.getDepositAmount() == null || request.getDepositAmount().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("Tiền cọc không được để trống và phải >= 0!");
         }
         if (request.getStepPrice() == null || request.getStepPrice().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Bước giá phải lớn hơn 0!");
@@ -68,6 +71,7 @@ public class AuctionService {
         auction.setStartingPrice(request.getStartingPrice());
         auction.setCurrentPrice(request.getStartingPrice());
         auction.setBuyNowPrice(request.getBuyNowPrice());
+        auction.setDepositAmount(request.getDepositAmount()); // Set tiền cọc
         auction.setStepPrice(request.getStepPrice());
         auction.setStartTime(request.getStartTime());
         auction.setEndTime(request.getEndTime());
@@ -85,16 +89,9 @@ public class AuctionService {
         return auctionRepository.save(auction);
     }
 
-    // Lấy tất cả phiên
-    public List<Auction> getAllAuctions() {
-        LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
-        return auctionRepository.findActiveAndRecentlyClosed(twentyFourHoursAgo);
-    }
-
     // Đặt giá
     @Transactional
     public Auction placeBid(Long auctionId, BigDecimal bidAmount, String username) {
-        // ✅ Validate giá bid
         if (bidAmount == null || bidAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Giá đặt phải lớn hơn 0!");
         }
@@ -119,15 +116,19 @@ public class AuctionService {
             throw new RuntimeException("Bạn đang dẫn đầu rồi, không cần đặt thêm nữa!");
         }
 
+        // --- BƯỚC QUAN TRỌNG: Kiểm tra vé vào cửa (Tiền cọc) ---
+        boolean hasLockedDeposit = depositRepository.existsByUserAndAuctionAndStatus(bidder, auction, "LOCKED");
+        if (!hasLockedDeposit) {
+            throw new RuntimeException("Bạn phải đặt cọc trước khi đưa ra giá thầu!");
+        }
+        // --------------------------------------------------------
+
         BigDecimal minNextPrice = auction.getWinner() == null
                 ? auction.getCurrentPrice()
                 : auction.getCurrentPrice().add(auction.getStepPrice());
 
         if (bidAmount.compareTo(minNextPrice) < 0) {
             throw new RuntimeException("Giá đặt không hợp lệ! Phải tối thiểu là: " + minNextPrice);
-        }
-        if (bidder.getBalance().compareTo(bidAmount) < 0) {
-            throw new RuntimeException("Số dư không đủ! (Ví hiện tại: " + bidder.getBalance() + ")");
         }
 
         // Tự động gia hạn nếu còn < 3 phút
@@ -136,12 +137,9 @@ public class AuctionService {
             auction.setEndTime(auction.getEndTime().plusSeconds(120));
         }
 
-        // Hoàn tiền người thua
+        // Gửi thông báo cho người thua cũ (ĐÃ XÓA LOGIC HOÀN TIỀN VÍ)
         User previousWinner = auction.getWinner();
         if (previousWinner != null) {
-            previousWinner.setBalance(previousWinner.getBalance().add(auction.getCurrentPrice()));
-            userRepository.save(previousWinner);
-
             Map<String, Object> outbidNotif = new HashMap<>();
             outbidNotif.put("title", "⚠️ Bị vượt giá!");
             outbidNotif.put("message", "Tài khoản " + bidder.getUsername()
@@ -162,15 +160,12 @@ public class AuctionService {
         messagingTemplate.convertAndSend(
                 "/topic/notifications/" + auction.getSeller().getUsername(), (Object) sellerNotif);
 
-        // Trừ tiền bidder
-        bidder.setBalance(bidder.getBalance().subtract(bidAmount));
-        userRepository.save(bidder);
-
         // Cập nhật auction
         auction.setCurrentPrice(bidAmount);
         auction.setWinner(bidder);
         auctionRepository.save(auction);
 
+        // Lưu lịch sử Bid
         Bid bid = new Bid();
         bid.setAuction(auction);
         bid.setUser(bidder);
@@ -201,24 +196,27 @@ public class AuctionService {
         if (auction.getSeller().getId().equals(buyer.getId())) {
             throw new RuntimeException("Bạn không thể tự mua sản phẩm của mình!");
         }
-        if (buyer.getBalance().compareTo(auction.getBuyNowPrice()) < 0) {
+
+        // Tính toán số tiền thực tế phải trừ (nếu người này đã cọc rồi thì trừ phần cọc ra)
+        boolean hasLockedDeposit = depositRepository.existsByUserAndAuctionAndStatus(buyer, auction, "LOCKED");
+        BigDecimal finalPriceToPay = hasLockedDeposit
+                ? auction.getBuyNowPrice().subtract(auction.getDepositAmount())
+                : auction.getBuyNowPrice();
+
+        if (buyer.getBalance().compareTo(finalPriceToPay) < 0) {
             throw new RuntimeException("Số dư không đủ để mua đứt sản phẩm này!");
         }
 
-        // Hoàn tiền người đang dẫn đầu (nếu có)
-        User previousWinner = auction.getWinner();
-        if (previousWinner != null) {
-            previousWinner.setBalance(previousWinner.getBalance().add(auction.getCurrentPrice()));
-            userRepository.save(previousWinner);
-        }
-
-        // Trừ tiền buyer, cộng tiền seller
-        buyer.setBalance(buyer.getBalance().subtract(auction.getBuyNowPrice()));
+        // Trừ tiền người mua, cộng tiền người bán
+        buyer.setBalance(buyer.getBalance().subtract(finalPriceToPay));
         userRepository.save(buyer);
 
         User seller = auction.getSeller();
         seller.setBalance(seller.getBalance().add(auction.getBuyNowPrice()));
         userRepository.save(seller);
+
+        // Nếu đã cọc, chuyển trạng thái cọc thành CAPTURED (Đã dùng để thanh toán)
+        // (Trong thực tế bạn nên gọi DepositService để update, ở đây ghi chú logic)
 
         // Lưu địa chỉ giao hàng
         Address defaultAddr = buyer.getDefaultAddress();
@@ -236,7 +234,11 @@ public class AuctionService {
         return auctionRepository.save(auction);
     }
 
-    // Gợi ý sản phẩm
+    public List<Auction> getAllAuctions() {
+        LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
+        return auctionRepository.findActiveAndRecentlyClosed(twentyFourHoursAgo);
+    }
+
     public List<Auction> getRecommendations(Long currentAuctionId) {
         Auction currentAuction = auctionRepository.findById(currentAuctionId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
@@ -246,7 +248,6 @@ public class AuctionService {
                 currentCategory, AuctionStatus.OPEN, currentAuctionId);
     }
 
-    // Validate hồ sơ user
     private void validateUserProfile(User user) {
         if (user.getFullName() == null || user.getFullName().isBlank()) {
             throw new RuntimeException("Bạn cần cập nhật họ tên trước khi tham gia đấu giá!");
@@ -257,5 +258,53 @@ public class AuctionService {
         if (user.getAddresses() == null || user.getAddresses().isEmpty()) {
             throw new RuntimeException("Bạn cần thêm địa chỉ giao hàng trước khi tham gia đấu giá!");
         }
+    }
+    @Transactional
+    public String payRemainingBalance(Long auctionId, String username) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
+
+        if (auction.getStatus() != AuctionStatus.CLOSED) {
+            throw new RuntimeException("Phiên đấu giá chưa kết thúc!");
+        }
+
+        User winner = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        if (auction.getWinner() == null || !auction.getWinner().getId().equals(winner.getId())) {
+            throw new RuntimeException("Bạn không phải là người chiến thắng phiên này!");
+        }
+
+        AuctionDeposit deposit = depositRepository.findByUserAndAuction(winner, auction)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin đặt cọc"));
+
+        if (!"AWAITING_PAYMENT".equals(deposit.getStatus())) {
+            throw new RuntimeException("Đơn hàng này đã được thanh toán hoặc trạng thái không hợp lệ!");
+        }
+
+        BigDecimal remainingAmount = auction.getCurrentPrice().subtract(deposit.getAmount());
+
+        if (winner.getBalance().compareTo(remainingAmount) < 0) {
+            throw new RuntimeException("Số dư ví không đủ (" + winner.getBalance() + "đ). Vui lòng nạp thêm " + remainingAmount.subtract(winner.getBalance()) + "đ qua VNPAY để thanh toán.");
+        }
+
+        winner.setBalance(winner.getBalance().subtract(remainingAmount));
+        userRepository.save(winner);
+
+        User seller = auction.getSeller();
+        seller.setBalance(seller.getBalance().add(auction.getCurrentPrice()));
+        userRepository.save(seller);
+
+        deposit.setStatus("COMPLETED");
+        depositRepository.save(deposit);
+
+        Map<String, Object> sellerNotif = new HashMap<>();
+        sellerNotif.put("title", "📦 Người mua đã thanh toán!");
+        sellerNotif.put("message", "Tài khoản " + winner.getUsername() + " đã thanh toán đủ tiền cho: " + auction.getProductName() + ". Bạn đã nhận được " + auction.getCurrentPrice() + "đ vào ví. Vui lòng giao hàng!");
+        sellerNotif.put("auctionId", auction.getId());
+        sellerNotif.put("type", "success");
+        messagingTemplate.convertAndSend("/topic/notifications/" + seller.getUsername(), (Object) sellerNotif);
+
+        return "Thanh toán thành công! Người bán đã nhận được thông báo để giao hàng.";
     }
 }

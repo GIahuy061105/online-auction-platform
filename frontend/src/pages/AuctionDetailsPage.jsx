@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Row, Col, Statistic, Button, InputNumber, Table, message, Spin, Form, Image, Space } from 'antd';
+import { Row, Col, Statistic, Button, InputNumber, Table, Modal , message, Spin, Form, Image, Space } from 'antd';
 import { RiseOutlined, ArrowLeftOutlined, UserOutlined, LeftOutlined, RightOutlined, HeartOutlined, HeartFilled, FireOutlined, TrophyOutlined, TagOutlined } from '@ant-design/icons';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
@@ -29,7 +29,8 @@ const AuctionDetailPage = () => {
     const deadline = auction ? new Date(auction.endTime).getTime() : 0;
     const isOpen = auction?.status === 'OPEN';
     const minBid = auction ? auction.currentPrice + auction.stepPrice : 0;
-
+    const { confirm } = Modal;
+    const [isAwaitingPayment, setIsAwaitingPayment] = useState(false);
     useEffect(() => {
         const activeThumb = document.getElementById(`thumb-${currentIndex}`);
         if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -78,6 +79,30 @@ const AuctionDetailPage = () => {
             setLoadingBuyNow(false);
         }
     };
+    const handleCheckout = async () => {
+        setLoadingBuyNow(true);
+        try {
+            await api.post(`/auctions/${id}/checkout`);
+            message.success('Thanh toán thành công! Người bán chuẩn bị giao hàng.');
+            fetchAuctionDetail(); // Reload lại để mất nút thanh toán
+            fetchProfile(); // Cập nhật lại số dư trên Navbar
+        } catch (error) {
+            if (error.response?.data?.message?.includes("Số dư ví không đủ")) {
+                confirm({
+                    title: 'Số dư ví không đủ',
+                    content: error.response.data.message,
+                    okText: 'Nạp thêm tiền',
+                    cancelText: 'Để sau',
+                    onOk() { navigate('/deposit'); } // Đổi route phù hợp với app của bạn
+                });
+            } else {
+                message.error(error.response?.data?.message || 'Thanh toán thất bại!');
+            }
+        } finally {
+            setLoadingBuyNow(false);
+        }
+    };
+
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -106,10 +131,21 @@ const AuctionDetailPage = () => {
         setBidding(true);
         try {
             await api.post(`/auctions/${id}/bid`, null, { params: { amount: values.amount } });
-            message.success('🎉 Đấu giá thành công!');
+            message.success('🎉 Đặt giá thành công!');
             fetchAuctionDetail();
         } catch (error) {
-            message.error(error.response?.data?.message || 'Đấu giá thất bại');
+            const errorMsg = error.response?.data?.message || '';
+            if (errorMsg.includes('phải đặt cọc trước') || errorMsg.includes('Số dư không đủ')) {
+                confirm({
+                    title: 'Yêu cầu Đặt cọc',
+                    content: `Bạn cần đặt cọc ${formatCurrency(auction.depositAmount || 0)} để tham gia phiên này. Số dư hiện tại không đủ.`,
+                    okText: 'Nạp tiền ngay',
+                    cancelText: 'Hủy',
+                    onOk() { navigate('/deposit'); }
+                });
+            } else {
+                message.error(errorMsg || 'Đấu giá thất bại');
+            }
         } finally {
             setBidding(false);
         }
@@ -677,7 +713,9 @@ const AuctionDetailPage = () => {
 
                                         <div className="price-label">Giá hiện tại</div>
                                         <div className="price-value">{formatCurrency(auction.currentPrice)}</div>
-
+                                        <div style={{ marginTop: 10, fontSize: 14, color: 'rgba(255,255,255,0.8)', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: 10 }}>
+                                             <span>Tiền cọc bắt buộc: <b style={{ color: '#f59e0b', fontSize: 16 }}>{formatCurrency(auction.depositAmount || 0)}</b></span>
+                                        </div>
                                         <div className="price-divider" />
 
                                         <div className="winner-row">
@@ -757,6 +795,19 @@ const AuctionDetailPage = () => {
                                         bordered={false}
                                     />
                                 </div>
+                                {auction?.status === 'CLOSED' && userProfile?.username === auction?.winner?.username && (
+                                    <div className="buy-now-section" style={{ marginTop: 16 }}>
+                                        <div className="buy-now-label" style={{ color: '#0d7a76' }}>🏆 Xin chúc mừng! Bạn là người thắng cuộc.</div>
+                                        <button
+                                            className="buy-now-btn"
+                                            style={{ background: 'linear-gradient(90deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.35)' }}
+                                            disabled={loadingBuyNow}
+                                            onClick={handleCheckout}
+                                        >
+                                            {loadingBuyNow ? 'Đang xử lý...' : '💳 THANH TOÁN PHẦN CÒN LẠI'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </Col>
                     </Row>

@@ -27,9 +27,9 @@ public class Auction {
     private String description;
 
     @Column(nullable = false)
-    private BigDecimal startingPrice; // Giá khởi điểm
+    private BigDecimal startingPrice;
 
-    private BigDecimal currentPrice;// Giá cao nhất hiện tại
+    private BigDecimal currentPrice;
 
     @Column(nullable = false)
     private BigDecimal stepPrice;
@@ -44,13 +44,14 @@ public class Auction {
     @Column(name= "image_url")
     private List<String> imageUrls = new ArrayList<>();
 
+    @Column(name = "deposit_amount", nullable = false)
+    private BigDecimal depositAmount;
 
     @Enumerated(EnumType.STRING)
     private AuctionStatus status; // Enum: OPEN, CLOSED, CANCELLED
     @Enumerated(EnumType.STRING)
     @Column(name = "category")
     private Category category;
-    // Người bán (Ai tạo phiên đấu giá này?)
     @ManyToOne
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;

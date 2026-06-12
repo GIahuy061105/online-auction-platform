@@ -13,6 +13,7 @@ public class AuctionRequest {
     private BigDecimal startingPrice;
     private BigDecimal stepPrice;
     private BigDecimal buyNowPrice;
+    private BigDecimal depositAmount;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<String> imageUrls;

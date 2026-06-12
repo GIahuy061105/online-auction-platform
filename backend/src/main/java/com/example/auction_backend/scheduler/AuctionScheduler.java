@@ -4,7 +4,9 @@ import com.example.auction_backend.dto.response.AuctionResponse;
 import com.example.auction_backend.model.Address;
 import com.example.auction_backend.model.Auction;
 import com.example.auction_backend.enums.AuctionStatus;
+import com.example.auction_backend.model.AuctionDeposit;
 import com.example.auction_backend.model.User;
+import com.example.auction_backend.repository.AuctionDepositRepository;
 import com.example.auction_backend.repository.AuctionRepository;
 import com.example.auction_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +28,7 @@ public class AuctionScheduler {
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
-
+    private final AuctionDepositRepository depositRepository;
     @Scheduled(fixedRate = 60000)
     @Transactional
     public void updateAuctionStatus() {
@@ -44,8 +46,7 @@ public class AuctionScheduler {
         }
 
         // 2: ĐÓNG PHIÊN (OPEN -> CLOSED)
-        List<Auction> expiredAuctions = auctionRepository.findByStatusAndEndTimeBefore(
-                AuctionStatus.OPEN, now);
+        List<Auction> expiredAuctions = auctionRepository.findByStatusAndEndTimeBefore(AuctionStatus.OPEN, now);
         if (!expiredAuctions.isEmpty()) {
             for (Auction auction : expiredAuctions) {
                 auction.setStatus(AuctionStatus.CLOSED);
@@ -54,11 +55,24 @@ public class AuctionScheduler {
                 User seller = auction.getSeller();
                 BigDecimal finalPrice = auction.getCurrentPrice();
 
-                if (winner != null) {
-                    // Cộng tiền seller
-                    seller.setBalance(seller.getBalance().add(finalPrice));
-                    userRepository.save(seller);
+                List<AuctionDeposit> deposits = depositRepository.findByAuction(auction);
+                for (AuctionDeposit deposit : deposits) {
+                    if (winner != null && deposit.getUser().getId().equals(winner.getId())) {
+                        deposit.setStatus("AWAITING_PAYMENT");
+                    } else {
+                        User loser = deposit.getUser();
+                        loser.setBalance(loser.getBalance().add(deposit.getAmount()));
+                        userRepository.save(loser);
+                        deposit.setStatus("REFUNDED");
+                        Map<String, Object> refundNotif = new HashMap<>();
+                        refundNotif.put("title", "💸 Đã hoàn tiền cọc");
+                        refundNotif.put("message", "Bạn đã được hoàn " + deposit.getAmount() + "đ từ phiên: " + auction.getProductName());
+                        messagingTemplate.convertAndSend("/topic/notifications/" + loser.getUsername(), (Object) refundNotif);
+                    }
+                    depositRepository.save(deposit);
+                }
 
+                if (winner != null) {
                     // Lưu địa chỉ giao hàng
                     Address defaultAddr = winner.getDefaultAddress();
                     if (defaultAddr != null) {

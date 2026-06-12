@@ -44,6 +44,7 @@ const CreateAuctionPage = () => {
                 startingPrice: values.startingPrice,
                 stepPrice: values.stepPrice,
                 buyNowPrice: values.buyNowPrice || null,
+                depositAmount: values.depositAmount,
                 startTime: values.timeRange[0].format('YYYY-MM-DDTHH:mm:ss'),
                 endTime: values.timeRange[1].format('YYYY-MM-DDTHH:mm:ss'),
                 imageUrls: fileList.map(f => f.url),
@@ -194,6 +195,27 @@ const CreateAuctionPage = () => {
                             {/* GIÁ */}
                             <SECTION icon={<DollarOutlined />} title="Thiết lập giá">
                                 <div className="price-grid">
+                                    <Form.Item name="depositAmount" label="Tiền cọc bắt buộc (₫)"
+                                        rules={[
+                                            { required: true, message: 'Nhập số tiền cọc để tránh bom hàng' },
+                                            ({ getFieldValue }) => ({
+                                                validator(_, value) {
+                                                    if (value && value < 0) return Promise.reject(new Error('Tiền cọc không được âm!'));
+                                                    if (value && value > getFieldValue('startingPrice'))
+                                                        return Promise.reject(new Error('Tiền cọc không được lớn hơn giá khởi điểm!'));
+                                                    return Promise.resolve();
+                                                },
+                                            })
+                                        ]}>
+                                        <InputNumber
+                                            size="large"
+                                            formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                            parser={(v) => v?.replace(/\$\s?|(,*)/g, '')}
+                                            addonAfter="₫"
+                                            min={0}
+                                            placeholder="Số tiền người mua phải cọc để tham gia"
+                                        />
+                                    </Form.Item>
                                     <Form.Item name="startingPrice" label="Giá khởi điểm (₫)"
                                         rules={[{ required: true, message: 'Nhập giá khởi điểm' }]}>
                                         <InputNumber

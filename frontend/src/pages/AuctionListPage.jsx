@@ -72,6 +72,9 @@ const AuctionListPage = () => {
     useEffect(() => {
         const client = new Client({
             webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL || 'https://sdkauction.up.railway.app'}/ws`),
+                connectHeaders: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                    },
             onConnect: () => {
                 client.subscribe('/topic/auctions/', (msg) => {
                     const newAuctionData = JSON.parse(msg.body);
