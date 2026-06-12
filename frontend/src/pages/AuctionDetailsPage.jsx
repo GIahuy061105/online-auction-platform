@@ -84,7 +84,9 @@ const AuctionDetailPage = () => {
     const handleCheckout = async () => {
         setLoadingBuyNow(true);
         try {
-            await api.post(`/auctions/${id}/checkout`);
+            await api.post(`/auctions/${id}/checkout`, {}, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
             message.success('Thanh toán thành công! Người bán chuẩn bị giao hàng.');
             fetchAuctionDetail(); // Reload lại để mất nút thanh toán
             fetchProfile(); // Cập nhật lại số dư trên Navbar
