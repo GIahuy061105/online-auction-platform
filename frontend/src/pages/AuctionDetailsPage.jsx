@@ -243,17 +243,19 @@ const AuctionDetailPage = () => {
             setRecommendations(response.data);
         } catch (error) { }
     };
-    useEffect(() => {
-        const fetchProfileData = async () => {
+    const fetchProfile = async () => {
             if (!localStorage.getItem('token')) return;
-                try {
-                    const resProfile = await api.get('/users/my-profile');
-                    setUserProfile(resProfile.data);
-                    const resAddress = await api.get('/users/addresses');
-                    setUserAddresses(resAddress.data);
-                } catch (e) {}
-            };
-        fetchProfileData();
+            try {
+                const resProfile = await api.get('/users/my-profile');
+                setUserProfile(resProfile.data);
+                const resAddress = await api.get('/users/addresses');
+                setUserAddresses(resAddress.data);
+            } catch (e) {
+                console.error("Lỗi tải profile:", e);
+            }
+        }
+    useEffect(() => {
+        fetchProfile();
     }, []);
     const checkProfile = () => {
         if (!userProfile?.fullName || !userProfile?.phoneNumber) {
