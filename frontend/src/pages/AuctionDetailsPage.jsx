@@ -253,10 +253,10 @@ const AuctionDetailPage = () => {
             } catch (e) {
                 console.error("Lỗi tải profile:", e);
             }
-        }
-    useEffect(() => {
-        fetchProfile();
-    }, []);
+        };
+        useEffect(() => {
+            fetchProfile();
+        }, []);
     const checkProfile = () => {
         if (!userProfile?.fullName || !userProfile?.phoneNumber) {
             message.warning({
@@ -764,18 +764,14 @@ const AuctionDetailPage = () => {
                                     </div>
 
                                     {/* PRICE BOX */}
-                                    <div className="price-box">
-                                        {isOpen && (
-                                            <div className="timer-section">
-                                                <div className="timer-label">⌛ Thời gian còn lại</div>
-                                                <Statistic.Timer
-                                                    type="countdown"
-                                                    value={deadline}
-                                                    format="D [ngày] HH:mm:ss"
-                                                    styles={{ content: { color: '#0ea5a0', fontWeight: '800', fontSize: '26px' } }}
-                                                    onFinish={fetchAuctionDetail}
-                                                />
-                                            </div>
+                                    <div className="timer-section">
+                                        <div className="timer-label">⌛ Thời gian còn lại</div>
+                                        <Statistic.Countdown
+                                            value={deadline}
+                                            format="D [ngày] HH:mm:ss"
+                                            valueStyle={{ color: '#0ea5a0', fontWeight: '800', fontSize: '26px' }}
+                                        />
+                                    </div>
                                         )}
 
                                         <div className="price-label">Giá hiện tại</div>
