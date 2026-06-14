@@ -357,4 +357,13 @@ public class AuctionService {
 
         return "Khóa cọc thành công! Bạn đã có thể trả giá.";
     }
+    public boolean checkUserDeposited(Long auctionId, String username) {
+        java.util.Optional<Auction> auctionOpt = auctionRepository.findById(auctionId);
+        java.util.Optional<User> userOpt = userRepository.findByUsername(username);
+
+        if (auctionOpt.isEmpty() || userOpt.isEmpty()) {
+            return false;
+        }
+        return depositRepository.findByUserAndAuction(userOpt.get(), auctionOpt.get()).isPresent();
+    }
 }

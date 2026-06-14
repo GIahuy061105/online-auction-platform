@@ -1,6 +1,7 @@
 package com.example.auction_backend.dto.response;
 
 import com.example.auction_backend.enums.Category;
+import com.example.auction_backend.enums.PaymentStatus;
 import com.example.auction_backend.model.Auction;
 import lombok.Builder;
 import lombok.Data;
@@ -35,12 +36,12 @@ public class AuctionResponse {
     private String deliveryAddress;
     // Danh mục
     private Category category;
-
+    private String paymentStatus;
     // Hàm chuyển đổi từ Auction Entity sang AuctionResponse
     public static AuctionResponse fromEntity(Auction auction) {
         String thumbnail = "https://via.placeholder.com/400x200?text=No+Image";
         if (auction.getImageUrls() != null && !auction.getImageUrls().isEmpty()) {
-            thumbnail = auction.getImageUrls().get(0); // Lấy cái thứ nhất (index 0)
+            thumbnail = auction.getImageUrls().get(0);
         }
         return AuctionResponse.builder()
                 .id(auction.getId())
@@ -55,6 +56,7 @@ public class AuctionResponse {
                 .imageUrl(thumbnail) // Map ảnh đầu tiên vào đây
                 .imageUrls(auction.getImageUrls())
                 .status(auction.getStatus().name())
+                .paymentStatus(auction.getPaymentStatus() != null ? auction.getPaymentStatus().name() : null)
                 .buyNowPrice(auction.getBuyNowPrice())
                 .seller(UserResponse.fromEntity(auction.getSeller()))
                 .category(auction.getCategory())

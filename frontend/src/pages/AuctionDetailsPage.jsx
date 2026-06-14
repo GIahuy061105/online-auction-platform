@@ -21,6 +21,7 @@ const AuctionDetailPage = () => {
     const [bidding, setBidding] = useState(false);
     const [loadingBuyNow, setLoadingBuyNow] = useState(false);
     const [selectedMedia, setSelectedMedia] = useState(null);
+    const [hasDeposited, setHasDeposited] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
     const [recommendations, setRecommendations] = useState([]);
     const [userProfile, setUserProfile] = useState(null);
@@ -75,6 +76,8 @@ const AuctionDetailPage = () => {
         try {
             await api.post(`/auctions/${id}/buy-now`);
             message.success('🎉 Bạn đã mua đứt sản phẩm thành công!');
+            fetchAuctionDetail();
+            fetchProfile();
         } catch (error) {
             message.error(error.response?.data?.message || 'Không thể mua đứt sản phẩm này!');
         } finally {
@@ -121,6 +124,7 @@ const AuctionDetailPage = () => {
                         const res = await api.post(`/auctions/${id}/lock-deposit`);
                         message.success(res.data.message || '✅ Khóa cọc thành công! Bạn đã có thể đặt giá.');
                         fetchProfile();
+                        setHasDeposited(true);
                     } catch (depErr) {
                         if (depErr.response?.data?.message === 'INSUFFICIENT_BALANCE') {
                             confirm({
@@ -142,6 +146,7 @@ const AuctionDetailPage = () => {
         fetchAuctionDetail();
         fetchRecommendations();
         checkWishlistStatus();
+        checkDepositStatus();
         const token = localStorage.getItem('token');
         if (!token) return;
         const client = new Client({
@@ -257,6 +262,15 @@ const AuctionDetailPage = () => {
         useEffect(() => {
             fetchProfile();
         }, []);
+    const checkDepositStatus = async () => {
+            if (!localStorage.getItem('token')) return;
+            try {
+                const res = await api.get(`/auctions/${id}/check-deposit`);
+                setHasDeposited(res.data.hasDeposited);
+            } catch (error) {
+                console.log("Lỗi kiểm tra cọc:", error);
+            }
+        };
     const checkProfile = () => {
         if (!userProfile?.fullName || !userProfile?.phoneNumber) {
             message.warning({
@@ -780,19 +794,25 @@ const AuctionDetailPage = () => {
                                         <div className="price-value">{formatCurrency(auction.currentPrice)}</div>
                                         <div style={{ marginTop: 10, fontSize: 14, color: 'rgba(255,255,255,0.8)', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: 10,display: 'flex',alignItems: 'center',justifyContent: 'space-between'}}>
                                             <span>Tiền cọc: <b style={{ color: '#f59e0b', fontSize: 16 }}>{formatCurrency(auction.depositAmount || 0)}</b></span>
-                                            <Button
-                                                size="small"
-                                                style={{
-                                                    background: 'linear-gradient(90deg, #f59e0b, #d97706)',
-                                                    border: 'none',
-                                                    color: 'white',
-                                                    fontWeight: 600,
-                                                    borderRadius: 6
-                                                }}
+                                            {!hasDeposited ? (
+                                                <Button
+                                                    size="small"
+                                                    style={{
+                                                        background: 'linear-gradient(90deg, #f59e0b, #d97706)',
+                                                        border: 'none',
+                                                        color: 'white',
+                                                        fontWeight: 600,
+                                                        borderRadius: 6
+                                                    }}
                                                 onClick={handleLockDeposit}
-                                            >
-                                                🔒 Đóng cọc ngay
-                                            </Button>
+                                                >
+                                                   🔒 Đóng cọc ngay
+                                                </Button>
+                                                ) : (
+                                                    <span style={{ color: '#10b981', fontWeight: 600, fontSize: 13, background: 'rgba(16,185,129,0.1)', padding: '4px 8px', borderRadius: 6 }}>
+                                                        ✅ Đã đóng cọc
+                                                    </span>
+                                                )}
                                         </div>
                                         <div className="price-divider" />
 
@@ -876,7 +896,7 @@ const AuctionDetailPage = () => {
                                         bordered={false}
                                     />
                                 </div>
-                                {auction?.status === 'CLOSED' && userProfile?.username === auction?.winner?.username && auction?.paymentStatus !== 'PAID' && (
+                                {auction?.status === 'CLOSED' && userProfile?.username === auction?.winner?.username && auction?.paymentStatus !== 'PAID' && auction?.currentPrice !== auction?.buyNowPrice &&(
                                     <div className="buy-now-section" style={{ marginTop: 16 }}>
                                         <div className="buy-now-label" style={{ color: '#0d7a76' }}>🏆 Xin chúc mừng! Bạn là người thắng cuộc.</div>
                                         <button

@@ -175,4 +175,12 @@ public class AuctionController {
             return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
         }
     }
+    @GetMapping("/{id}/check-deposit")
+    public ResponseEntity<?> checkDeposit(@PathVariable Long id, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.ok(Map.of("hasDeposited", false));
+        }
+        boolean hasDeposited = auctionService.checkUserDeposited(id, principal.getName());
+        return ResponseEntity.ok(Map.of("hasDeposited", hasDeposited));
+    }
 }
