@@ -764,14 +764,16 @@ const AuctionDetailPage = () => {
                                     </div>
 
                                     {/* PRICE BOX */}
-                                    <div className="timer-section">
-                                        <div className="timer-label">⌛ Thời gian còn lại</div>
-                                        <Statistic.Countdown
-                                            value={deadline}
-                                            format="D [ngày] HH:mm:ss"
-                                            valueStyle={{ color: '#0ea5a0', fontWeight: '800', fontSize: '26px' }}
-                                        />
-                                    </div>
+                                    <div className="price-box">
+                                        {isOpen && (
+                                            <div className="timer-section">
+                                                <div className="timer-label">⌛ Thời gian còn lại</div>
+                                                <Statistic.Countdown
+                                                    value={deadline}
+                                                    format="D [ngày] HH:mm:ss"
+                                                    valueStyle={{ color: '#0ea5a0', fontWeight: '800', fontSize: '26px' }}
+                                                />
+                                            </div>
                                         )}
 
                                         <div className="price-label">Giá hiện tại</div>
