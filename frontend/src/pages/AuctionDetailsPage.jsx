@@ -104,8 +104,39 @@ const AuctionDetailPage = () => {
             setLoadingBuyNow(false);
         }
     };
-
-
+    const handleLockDeposit = async () => {
+        if (!localStorage.getItem('token')) {
+            message.warning('Vui lòng đăng nhập để đóng cọc!');
+            navigate('/login');
+            return;
+        }
+        if (!checkProfile()) return;
+            confirm({
+                title: 'Yêu cầu Khóa Cọc',
+                content: `Hệ thống sẽ trích ${formatCurrency(auction.depositAmount || 0)} từ ví của bạn để làm tiền cọc. Số tiền này sẽ được HOÀN LẠI nếu bạn không trúng đấu giá.`,
+                okText: 'Đồng ý',
+                cancelText: 'Hủy bỏ',
+                async onOk() {
+                    try {
+                        const res = await api.post(`/auctions/${id}/lock-deposit`);
+                        message.success(res.data.message || '✅ Khóa cọc thành công! Bạn đã có thể đặt giá.');
+                        fetchProfile();
+                    } catch (depErr) {
+                        if (depErr.response?.data?.message === 'INSUFFICIENT_BALANCE') {
+                            confirm({
+                                title: 'Ví không đủ tiền',
+                                content: `Số dư ví của bạn không đủ ${formatCurrency(auction.depositAmount || 0)}. Vui lòng nạp thêm tiền qua VNPAY.`,
+                                okText: 'Nạp tiền ngay',
+                                cancelText: 'Để sau',
+                                onOk() { navigate('/deposit'); }
+                            });
+                        } else {
+                            message.error(depErr.response?.data?.message || 'Lỗi khóa cọc!');
+                        }
+                    }
+                }
+            });
+        };
     useEffect(() => {
         window.scrollTo(0, 0);
         fetchAuctionDetail();
@@ -747,8 +778,21 @@ const AuctionDetailPage = () => {
 
                                         <div className="price-label">Giá hiện tại</div>
                                         <div className="price-value">{formatCurrency(auction.currentPrice)}</div>
-                                        <div style={{ marginTop: 10, fontSize: 14, color: 'rgba(255,255,255,0.8)', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: 10 }}>
-                                             <span>Tiền cọc bắt buộc: <b style={{ color: '#f59e0b', fontSize: 16 }}>{formatCurrency(auction.depositAmount || 0)}</b></span>
+                                        <div style={{ marginTop: 10, fontSize: 14, color: 'rgba(255,255,255,0.8)', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: 10,display: 'flex',alignItems: 'center',justifyContent: 'space-between'}}>
+                                            <span>Tiền cọc: <b style={{ color: '#f59e0b', fontSize: 16 }}>{formatCurrency(auction.depositAmount || 0)}</b></span>
+                                            <Button
+                                                size="small"
+                                                style={{
+                                                    background: 'linear-gradient(90deg, #f59e0b, #d97706)',
+                                                    border: 'none',
+                                                    color: 'white',
+                                                    fontWeight: 600,
+                                                    borderRadius: 6
+                                                }}
+                                                onClick={handleLockDeposit}
+                                            >
+                                                🔒 Đóng cọc ngay
+                                            </Button>
                                         </div>
                                         <div className="price-divider" />
 
@@ -832,7 +876,7 @@ const AuctionDetailPage = () => {
                                         bordered={false}
                                     />
                                 </div>
-                                {auction?.status === 'CLOSED' && userProfile?.username === auction?.winner?.username && (
+                                {auction?.status === 'CLOSED' && userProfile?.username === auction?.winner?.username && auction?.paymentStatus !== 'PAID' && (
                                     <div className="buy-now-section" style={{ marginTop: 16 }}>
                                         <div className="buy-now-label" style={{ color: '#0d7a76' }}>🏆 Xin chúc mừng! Bạn là người thắng cuộc.</div>
                                         <button
@@ -844,6 +888,15 @@ const AuctionDetailPage = () => {
                                             {loadingBuyNow ? 'Đang xử lý...' : '💳 THANH TOÁN PHẦN CÒN LẠI'}
                                         </button>
                                     </div>
+                                )}
+                                {auction?.status === 'CLOSED' &&
+                                    userProfile?.username === auction?.winner?.username &&
+                                    auction?.paymentStatus === 'PAID' && (
+                                        <div className="timer-section" style={{ marginTop: 16, background: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.2)' }}>
+                                            <div style={{ color: '#059669', fontWeight: 700, fontSize: 15 }}>
+                                                ✅ Đơn hàng đã được thanh toán đầy đủ. Người bán đang chuẩn bị giao hàng!
+                                            </div>
+                                        </div>
                                 )}
                             </div>
                         </Col>

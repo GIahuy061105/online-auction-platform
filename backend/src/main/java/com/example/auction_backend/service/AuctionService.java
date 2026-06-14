@@ -119,7 +119,7 @@ public class AuctionService {
         }
 
         // --- BƯỚC QUAN TRỌNG: Kiểm tra vé vào cửa (Tiền cọc) ---
-        boolean hasLockedDeposit = depositRepository.existsByUserAndAuctionAndStatus(bidder, auction, "LOCKED");
+        boolean hasLockedDeposit = depositRepository.existsByUserAndAuctionAndDepositStatus(bidder, auction, DepositStatus.LOCKED);
         if (!hasLockedDeposit) {
             throw new RuntimeException("Bạn phải đặt cọc trước khi đưa ra giá thầu!");
         }
@@ -200,7 +200,7 @@ public class AuctionService {
         }
 
         // Tính toán số tiền thực tế phải trừ (nếu người này đã cọc rồi thì trừ phần cọc ra)
-        boolean hasLockedDeposit = depositRepository.existsByUserAndAuctionAndStatus(buyer, auction, "LOCKED");
+        boolean hasLockedDeposit = depositRepository.existsByUserAndAuctionAndDepositStatus(buyer, auction, DepositStatus.LOCKED);
         BigDecimal finalPriceToPay = hasLockedDeposit
                 ? auction.getBuyNowPrice().subtract(auction.getDepositAmount())
                 : auction.getBuyNowPrice();
@@ -307,6 +307,9 @@ public class AuctionService {
         seller.setBalance(seller.getBalance().add(auction.getCurrentPrice()));
         userRepository.save(seller);
 
+        auction.setPaymentStatus(PaymentStatus.PAID);
+        auctionRepository.save(auction);
+
         Map<String, Object> sellerNotif = new HashMap<>();
         sellerNotif.put("title", "📦 Người mua đã thanh toán!");
         sellerNotif.put("message", "Tài khoản " + winner.getUsername() + " đã thanh toán đủ tiền cho: " + auction.getProductName() + ". Bạn đã nhận được " + auction.getCurrentPrice() + "đ vào ví. Vui lòng giao hàng!");
@@ -329,7 +332,7 @@ public class AuctionService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         // 1. Kiểm tra xem đã cọc chưa
-        boolean alreadyDeposited = depositRepository.existsByUserAndAuctionAndStatus(user, auction, "LOCKED");
+        boolean alreadyDeposited = depositRepository.existsByUserAndAuctionAndDepositStatus(user, auction ,DepositStatus.LOCKED);
         if (alreadyDeposited) {
             return "Bạn đã đặt cọc cho phiên này rồi!";
         }
