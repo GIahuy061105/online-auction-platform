@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Table, Tag, Button, Space, Avatar, Spin } from 'antd';
+import { Table, Tag, Button, Space, Avatar, Spin ,Modal, message } from 'antd';
 import { EyeOutlined, ShopOutlined, TrophyOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -67,7 +67,7 @@ const MyActivityPage = () => {
                 };
                 const s = map[status] || map.CLOSED;
                 return (
-                    <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
+                    <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, color: s.color, background: s.bg, border: `1px solid ${s.border}` , whiteSpace: 'nowrap' }}>
                         {s.text}
                     </span>
                 );
