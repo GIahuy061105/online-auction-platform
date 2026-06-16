@@ -183,4 +183,14 @@ public class AuctionController {
         boolean hasDeposited = auctionService.checkUserDeposited(id, principal.getName());
         return ResponseEntity.ok(Map.of("hasDeposited", hasDeposited));
     }
+    @PostMapping("/{id}/confirm-receipt")
+    public ResponseEntity<?> confirmReceipt(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            String message = auctionService.confirmReceipt(id, username);
+            return ResponseEntity.ok(Map.of("status", "success", "message", message));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
 }

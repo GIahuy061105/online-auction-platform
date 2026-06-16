@@ -12,6 +12,10 @@ public class UserResponse {
     private AddressResponse defaultAddress;
     private Long id;
     private String username;
+    private boolean isVerified;
+    private String idCardNumber;
+    private String idCardName;
+    private boolean isPhoneVerified;
     public static UserResponse fromEntity(User user) {
         if (user == null) return null;
         return UserResponse.builder()
@@ -20,6 +24,10 @@ public class UserResponse {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .idCardNumber(user.getIdCardNumber())
+                .idCardName(user.getIdCardName())
+                .isVerified(user.isVerified())
+                .isPhoneVerified(user.isPhoneVerified())
                 .defaultAddress(AddressResponse.fromEntity(user.getDefaultAddress()))
                 .build();
     }

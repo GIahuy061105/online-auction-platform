@@ -84,19 +84,47 @@ const MyActivityPage = () => {
             title: '',
             key: 'action',
             render: (_, record) => (
-                <button
-                    onClick={() => navigate(`/auction/${record.id}`)}
-                    style={{
+                <Space>
+                    <button
+                        onClick={() => navigate(`/auction/${record.id}`)}
+                        style={{
                         padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(14,165,160,0.3)',
                         background: 'white', color: '#0d7a76', fontWeight: 600, fontSize: 13,
                         cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
                         fontFamily: 'inherit', transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f0fffe'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'white'}
-                >
-                    <EyeOutlined /> Chi tiết
-                </button>
+                        }}
+                    >
+                        <EyeOutlined /> Chi tiết
+                    </button>
+                        {activeTab === 'won' && record.paymentStatus === 'PAID' && record.deliveryStatus !== 'COMPLETED' && (
+                    <button
+                        onClick={() => {
+                            Modal.confirm({
+                                title: 'Xác nhận đã nhận hàng?',
+                                content: 'Bạn xác nhận đã nhận được sản phẩm đúng như mô tả? Tiền sẽ được chuyển cho người bán.',
+                                okText: 'Đã nhận',
+                                cancelText: 'Hủy',
+                                    onOk: async () => {
+                                        try {
+                                            await api.post(`/auctions/${record.id}/confirm-receipt`);
+                                            message.success('Xác nhận thành công!');
+                                            fetchData(activeTab);
+                                        } catch (error) {
+                                            message.error(error.response?.data?.message || 'Lỗi xác nhận');
+                                        }
+                                    }
+                            });
+                        }}
+                        style={{
+                            padding: '6px 14px', borderRadius: 8, border: 'none',
+                            background: '#3b82f6', color: 'white', fontWeight: 600, fontSize: 13,
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                        }}
+                        >
+                            📦 Đã nhận hàng
+                        </button>
+                            )}
+                        </Space>
             ),
         },
     ];

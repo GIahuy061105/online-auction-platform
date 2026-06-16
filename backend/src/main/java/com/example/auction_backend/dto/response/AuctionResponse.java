@@ -37,6 +37,7 @@ public class AuctionResponse {
     // Danh mục
     private Category category;
     private String paymentStatus;
+    private String deliveryStatus;
     // Hàm chuyển đổi từ Auction Entity sang AuctionResponse
     public static AuctionResponse fromEntity(Auction auction) {
         String thumbnail = "https://via.placeholder.com/400x200?text=No+Image";
@@ -57,6 +58,7 @@ public class AuctionResponse {
                 .imageUrls(auction.getImageUrls())
                 .status(auction.getStatus().name())
                 .paymentStatus(auction.getPaymentStatus() != null ? auction.getPaymentStatus().name() : null)
+                .deliveryStatus(auction.getDeliveryStatus() != null ? auction.getDeliveryStatus().name() : null)
                 .buyNowPrice(auction.getBuyNowPrice())
                 .seller(UserResponse.fromEntity(auction.getSeller()))
                 .category(auction.getCategory())

@@ -2,6 +2,7 @@ package com.example.auction_backend.model;
 
 import com.example.auction_backend.enums.AuctionStatus;
 import com.example.auction_backend.enums.Category;
+import com.example.auction_backend.enums.DeliveryStatus;
 import com.example.auction_backend.enums.PaymentStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -81,4 +82,8 @@ public class Auction {
 
     @Column(name = "delivery_address")
     private String deliveryAddress;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_status")
+    private DeliveryStatus deliveryStatus;
 }

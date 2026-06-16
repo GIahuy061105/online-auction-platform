@@ -108,6 +108,27 @@ const AuctionDetailPage = () => {
             setLoadingBuyNow(false);
         }
     };
+    const handleConfirmReceipt = () => {
+        confirm({
+            title: 'Xác nhận đã nhận hàng?',
+            content: 'Bạn chỉ nên xác nhận khi đã nhận được hàng và kiểm tra sản phẩm đúng như mô tả. Sau khi xác nhận, tiền sẽ được chuyển cho người bán.',
+            okText: 'Đã nhận hàng',
+            cancelText: 'Chưa nhận',
+            async onOk() {
+                setLoadingBuyNow(true);
+                    try {
+                        await api.post(`/auctions/${id}/confirm-receipt`);
+                        message.success('✅ Xác nhận thành công! Cảm ơn bạn đã mua sắm.');
+                        fetchAuctionDetail();
+                        fetchProfile();
+                    } catch (error) {
+                        message.error(error.response?.data?.message || 'Lỗi xác nhận!');
+                    } finally {
+                        setLoadingBuyNow(false);
+                    }
+                }
+            });
+        };
     const handleLockDeposit = async () => {
         if (!localStorage.getItem('token')) {
             message.warning('Vui lòng đăng nhập để đóng cọc!');
@@ -920,14 +941,34 @@ const AuctionDetailPage = () => {
                                     </div>
                                 )}
                                 {auction?.status === 'CLOSED' &&
-                                    userProfile?.username === auction?.winner?.username &&
-                                    auction?.paymentStatus === 'PAID' && (
-                                        <div className="timer-section" style={{ marginTop: 16, background: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.2)' }}>
-                                            <div style={{ color: '#059669', fontWeight: 700, fontSize: 15 }}>
-                                                ✅ Đơn hàng đã được thanh toán đầy đủ. Người bán đang chuẩn bị giao hàng!
+                                userProfile?.username === auction?.winner?.username &&
+                                auction?.paymentStatus === 'PAID' && (
+                                    <div className="timer-section" style={{ marginTop: 16, background: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.2)', padding: 20 }}>
+                                        {auction?.deliveryStatus !== 'COMPLETED' ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                                <div style={{ color: '#059669', fontWeight: 700, fontSize: 15 }}>
+                                                    ✅ Đã thanh toán (Tiền đang được hệ thống tạm giữ an toàn).
+                                                </div>
+                                            <div style={{ fontSize: 13, color: '#047857' }}>
+                                                Vui lòng bấm nút bên dưới <b>SAU KHI</b> bạn đã nhận và kiểm tra hàng thành công.
                                             </div>
-                                        </div>
-                                )}
+                                            <button
+                                            className="buy-now-btn"
+                                            style={{ background: 'linear-gradient(90deg, #3b82f6, #2563eb)', boxShadow: '0 4px 16px rgba(59,130,246,0.35)', height: 40 }}
+                                            disabled={loadingBuyNow}
+                                            onClick={handleConfirmReceipt}
+                                            >
+                                                {loadingBuyNow ? 'Đang xử lý...' : '📦 TÔI ĐÃ NHẬN ĐƯỢC HÀNG'}
+                                            </button>
+                                    </div>
+                                        ) : (
+                                            <div style={{ color: '#059669', fontWeight: 800, fontSize: 16 }}>
+                                                🎉 GIAO DỊCH HOÀN TẤT
+                                            <div style={{ fontSize: 13, fontWeight: 500, marginTop: 4 }}>Tiền đã được chuyển cho người bán. Cảm ơn bạn!</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                   )}
                             </div>
                         </Col>
                     </Row>

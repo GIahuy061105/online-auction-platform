@@ -46,6 +46,18 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
     @Column(nullable = false)
     private BigDecimal balance;
 
+    @Column(name = "is_verified", nullable = false, columnDefinition = "boolean default false")
+    private boolean isVerified = false;
+
+    @Column(name = "id_card_number", unique = true)
+    private String idCardNumber;
+
+    @Column(name = "id_card_name")
+    private String idCardName;
+
+    @Column(name = "is_phone_verified", nullable = false, columnDefinition = "boolean default false")
+    private boolean isPhoneVerified = false;
+
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Bid> bids;
@@ -55,7 +67,6 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
     private List<Auction> auctions;
 
 
-    // Địa chỉ giao hàng
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL ,fetch = FetchType.EAGER)
     private List<Address> addresses;
     @JsonIgnore
@@ -72,8 +83,6 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
 
     @Column(name = "otp_expiry_time")
     private LocalDateTime otpExpiryTime;
-
-    // --- CÁC HÀM CỦA SPRING SECURITY (UserDetails) ---
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

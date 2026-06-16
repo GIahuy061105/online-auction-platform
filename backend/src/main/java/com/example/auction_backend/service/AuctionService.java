@@ -198,8 +198,6 @@ public class AuctionService {
         if (auction.getSeller().getId().equals(buyer.getId())) {
             throw new RuntimeException("Bạn không thể tự mua sản phẩm của mình!");
         }
-
-        // Tính toán số tiền thực tế phải trừ (nếu người này đã cọc rồi thì trừ phần cọc ra)
         boolean hasLockedDeposit = depositRepository.existsByUserAndAuctionAndDepositStatus(buyer, auction, DepositStatus.LOCKED);
         BigDecimal finalPriceToPay = hasLockedDeposit
                 ? auction.getBuyNowPrice().subtract(auction.getDepositAmount())
@@ -209,13 +207,8 @@ public class AuctionService {
             throw new RuntimeException("Số dư không đủ để mua đứt sản phẩm này!");
         }
 
-        // Trừ tiền người mua, cộng tiền người bán
         buyer.setBalance(buyer.getBalance().subtract(finalPriceToPay));
         userRepository.save(buyer);
-
-        User seller = auction.getSeller();
-        seller.setBalance(seller.getBalance().add(auction.getBuyNowPrice()));
-        userRepository.save(seller);
 
         if (hasLockedDeposit) {
             AuctionDeposit deposit = depositRepository
@@ -239,6 +232,7 @@ public class AuctionService {
         auction.setStatus(AuctionStatus.CLOSED);
         auction.setEndTime(LocalDateTime.now());
         auction.setPaymentStatus(PaymentStatus.PAID);
+        auction.setDeliveryStatus(com.example.auction_backend.enums.DeliveryStatus.PREPARING);
         return auctionRepository.save(auction);
     }
 
@@ -303,21 +297,18 @@ public class AuctionService {
         winner.setBalance(winner.getBalance().subtract(remainingAmount));
         userRepository.save(winner);
 
-        User seller = auction.getSeller();
-        seller.setBalance(seller.getBalance().add(auction.getCurrentPrice()));
-        userRepository.save(seller);
-
         auction.setPaymentStatus(PaymentStatus.PAID);
+        auction.setDeliveryStatus(com.example.auction_backend.enums.DeliveryStatus.PREPARING);
         auctionRepository.save(auction);
 
+        User seller = auction.getSeller();
         Map<String, Object> sellerNotif = new HashMap<>();
         sellerNotif.put("title", "📦 Người mua đã thanh toán!");
-        sellerNotif.put("message", "Tài khoản " + winner.getUsername() + " đã thanh toán đủ tiền cho: " + auction.getProductName() + ". Bạn đã nhận được " + auction.getCurrentPrice() + "đ vào ví. Vui lòng giao hàng!");
+        sellerNotif.put("message", "Tài khoản " + winner.getUsername() + " đã thanh toán. Hệ thống đang TẠM GIỮ " + auction.getCurrentPrice() + "đ. Vui lòng giao hàng để nhận tiền!");
         sellerNotif.put("auctionId", auction.getId());
         sellerNotif.put("type", "success");
         messagingTemplate.convertAndSend("/topic/notifications/" + seller.getUsername(), (Object) sellerNotif);
-
-        return "Thanh toán thành công! Người bán đã nhận được thông báo để giao hàng.";
+        return "Thanh toán thành công! Hệ thống đang tạm giữ tiền chờ người bán giao hàng.";
     }
     @Transactional
     public String lockDeposit(Long auctionId, String username) {
@@ -367,5 +358,27 @@ public class AuctionService {
             return false;
         }
         return depositRepository.findByUserAndAuction(userOpt.get(), auctionOpt.get()).isPresent();
+    }
+    @Transactional
+    public String confirmReceipt(Long auctionId, String username) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiên đấu giá"));
+        if (auction.getWinner() == null || !auction.getWinner().getUsername().equals(username)) {
+            throw new RuntimeException("Chỉ người mua mới có quyền xác nhận nhận hàng!");
+        }
+        if (auction.getDeliveryStatus() == com.example.auction_backend.enums.DeliveryStatus.COMPLETED) {
+            throw new RuntimeException("Đơn hàng này đã được xác nhận hoàn thành rồi!");
+        }
+        if (auction.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new RuntimeException("Đơn hàng này chưa được thanh toán!");
+        }
+        auction.setDeliveryStatus(com.example.auction_backend.enums.DeliveryStatus.COMPLETED);
+        auctionRepository.save(auction);
+        User seller = auction.getSeller();
+        BigDecimal finalPrice = auction.getBuyNowPrice() != null ? auction.getBuyNowPrice() : auction.getCurrentPrice();
+
+        seller.setBalance(seller.getBalance().add(finalPrice));
+        userRepository.save(seller);
+        return "Xác nhận nhận hàng thành công! Tiền đã được chuyển vào ví của người bán.";
     }
 }
