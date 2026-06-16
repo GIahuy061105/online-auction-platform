@@ -330,7 +330,9 @@ public class AuctionService {
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
-
+        if (auction.getSeller().getId().equals(user.getId())) {
+            throw new RuntimeException("Bạn không thể đặt cọc cho sản phẩm do chính bạn đăng bán!");
+        }
         // 1. Kiểm tra xem đã cọc chưa
         boolean alreadyDeposited = depositRepository.existsByUserAndAuctionAndDepositStatus(user, auction ,DepositStatus.LOCKED);
         if (alreadyDeposited) {

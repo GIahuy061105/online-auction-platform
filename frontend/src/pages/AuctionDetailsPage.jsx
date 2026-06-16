@@ -30,6 +30,7 @@ const AuctionDetailPage = () => {
     const currentIndex = auction?.imageUrls ? auction.imageUrls.indexOf(selectedMedia) : 0;
     const deadline = auction ? new Date(auction.endTime).getTime() : 0;
     const isOpen = auction?.status === 'OPEN';
+    const isSeller = userProfile?.username === auction?.seller?.username;
     const minBid = auction ? Number(auction.currentPrice) + Number(auction.stepPrice) : 0;
     const { confirm } = Modal;
     const [form] = Form.useForm();
@@ -792,6 +793,7 @@ const AuctionDetailPage = () => {
 
                                         <div className="price-label">Giá hiện tại</div>
                                         <div className="price-value">{formatCurrency(auction.currentPrice)}</div>
+                                        {!isSeller && (
                                         <div style={{ marginTop: 10, fontSize: 14, color: 'rgba(255,255,255,0.8)', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: 10,display: 'flex',alignItems: 'center',justifyContent: 'space-between'}}>
                                             <span>Tiền cọc: <b style={{ color: '#f59e0b', fontSize: 16 }}>{formatCurrency(auction.depositAmount || 0)}</b></span>
                                             {!hasDeposited ? (
@@ -814,6 +816,7 @@ const AuctionDetailPage = () => {
                                                     </span>
                                                 )}
                                         </div>
+                                        )}
                                         <div className="price-divider" />
 
                                         <div className="winner-row">
@@ -830,7 +833,7 @@ const AuctionDetailPage = () => {
                                 </div>
 
                                 {/* BID FORM */}
-                                {isOpen && (
+                                {isOpen && !isSeller &&(
                                     <div className="bid-form-section">
                                         <h4 className="section-title">⚡ Đặt giá của bạn</h4>
                                         <div style={{ background: '#f0fffe', borderRadius: 10, padding: '10px 14px', marginBottom: 16, border: '1px solid rgba(14,165,160,0.15)' }}>
@@ -874,13 +877,20 @@ const AuctionDetailPage = () => {
                                 )}
 
                                 {/* BUY NOW */}
-                                {isOpen && auction.buyNowPrice && (
+                                {isOpen && auction.buyNowPrice && !isSeller &&(
                                     <div className="buy-now-section">
                                         <div className="buy-now-label">⚡ Mua ngay không cần đấu giá</div>
                                         <div className="buy-now-price">{formatCurrency(auction.buyNowPrice)}</div>
                                         <button className="buy-now-btn" disabled={loadingBuyNow} onClick={handleBuyNow}>
                                             {loadingBuyNow ? 'Đang xử lý...' : '⚡ MUA ĐỨT NGAY'}
                                         </button>
+                                    </div>
+                                )}
+                                {isSeller && (
+                                    <div className="buy-now-section" style={{ background: '#f0fdf4', borderColor: '#bbf7d0', marginTop: 16 }}>
+                                        <div style={{ color: '#166534', fontWeight: 600, fontSize: 15 }}>
+                                            🛍️ Đây là sản phẩm do bạn đăng bán. Bạn không thể tự đấu giá!
+                                        </div>
                                     </div>
                                 )}
 
