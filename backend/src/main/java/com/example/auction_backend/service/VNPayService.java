@@ -30,11 +30,13 @@ public class VNPayService {
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", "vn");
         params.put("vnp_ReturnUrl", config.getReturnUrl());
-        params.put("vnp_IpAddr", ipAddr);
+
+        params.put("vnp_IpAddr", (ipAddr != null && !ipAddr.isEmpty()) ? ipAddr : "127.0.0.1");
 
         TimeZone tz = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         formatter.setTimeZone(tz);
+
         String vnp_CreateDate = formatter.format(new Date());
         params.put("vnp_CreateDate", vnp_CreateDate);
 
@@ -46,17 +48,26 @@ public class VNPayService {
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
 
-        for (Map.Entry<String, String> e : params.entrySet()) {
-            if (e.getValue() != null && !e.getValue().isEmpty()) {
-                String key = e.getKey();
-                String encVal = URLEncoder.encode(e.getValue(), StandardCharsets.US_ASCII);
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+
+                // Encode giá trị bằng UTF-8
+                String encVal = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+
+                // Build hash data
                 hashData.append(key).append('=').append(encVal).append('&');
-                String encKey = URLEncoder.encode(key, StandardCharsets.US_ASCII);
+
+                // Build query
+                String encKey = URLEncoder.encode(key, StandardCharsets.UTF_8.toString());
                 query.append(encKey).append('=').append(encVal).append('&');
             }
         }
+
         String hashStr = hashData.substring(0, hashData.length() - 1);
         String queryStr = query.substring(0, query.length() - 1);
+
         String secureHash = hmacSHA512(config.getHashSecret(), hashStr);
         return config.getVnpUrl() + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
     }
@@ -70,19 +81,14 @@ public class VNPayService {
         StringBuilder hashData = new StringBuilder();
         for (Map.Entry<String, String> entry : sortedParams.entrySet()) {
             if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-                // ✅ Encode value giống createPaymentUrl
-                String encVal = URLEncoder.encode(entry.getValue(), StandardCharsets.US_ASCII);
+                // Encode giá trị bằng UTF-8 khi verify
+                String encVal = URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString());
                 hashData.append(entry.getKey()).append('=').append(encVal).append('&');
             }
         }
         if (hashData.length() > 0) hashData.deleteCharAt(hashData.length() - 1);
 
         String checkHash = hmacSHA512(config.getHashSecret(), hashData.toString());
-
-        System.out.println("Calculated: " + checkHash);
-        System.out.println("Expected  : " + vnp_SecureHash);
-        System.out.println("Match: " + checkHash.equalsIgnoreCase(vnp_SecureHash));
-
         return checkHash.equalsIgnoreCase(vnp_SecureHash);
     }
 
@@ -91,7 +97,9 @@ public class VNPayService {
         mac.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA512"));
         byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         StringBuilder sb = new StringBuilder();
-        for (byte b : hash) sb.append(String.format("%02x", b));
+        for (byte b : hash) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
         return sb.toString();
     }
 }
