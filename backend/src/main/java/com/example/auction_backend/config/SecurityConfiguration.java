@@ -35,6 +35,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/payment/vnpay-return").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/auctions",
                                 "/api/auctions/**",
