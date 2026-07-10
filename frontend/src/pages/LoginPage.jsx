@@ -1,6 +1,7 @@
 import { Form, Input, Button, message, Modal } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import api from '../services/api';
+import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -58,7 +59,24 @@ const LoginPage = () => {
             setLoadingOtp(false);
         }
     };
-
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        try {
+            const res = await api.post('/auth/google', {
+                credential: credentialResponse.credential
+            });
+            localStorage.setItem('token', res.data.token);
+            localStorage.setItem('username', res.data.username);
+            localStorage.setItem('role', res.data.role);
+            message.success('🎉 Xác thực Google thành công!');
+            navigate('/auction');
+        } catch (error) {
+            console.error("Lỗi Google Auth:", error);
+            message.error(error.response?.data?.message || 'Lỗi đăng nhập bằng Google!');
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <>
             <style>{`
@@ -398,7 +416,18 @@ const LoginPage = () => {
                         <span className="auth-divider-text">hoặc</span>
                         <div className="auth-divider-line" />
                     </div>
-
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                        <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => {
+                            message.error('Không thể kết nối với Google');
+                        }}
+                        shape="rectangular"
+                        text="continue_with"
+                        theme="outline"
+                        size="large"
+                         />
+                    </div>
                     <div className="auth-register-link">
                         Chưa có tài khoản?
                         <Link to="/register">Đăng ký ngay →</Link>
