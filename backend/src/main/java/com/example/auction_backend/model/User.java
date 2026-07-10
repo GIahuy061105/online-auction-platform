@@ -1,5 +1,6 @@
 package com.example.auction_backend.model;
 
+import com.example.auction_backend.enums.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -55,6 +56,11 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
     @Column(name = "id_card_name")
     private String idCardName;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'USER'")
+    @Builder.Default
+    private Role role = Role.USER;
+
     @Column(name = "is_phone_verified", nullable = false, columnDefinition = "boolean default false")
     private boolean isPhoneVerified = false;
 
@@ -86,7 +92,7 @@ public class User implements UserDetails { // Bắt buộc phải implements Use
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     @Override

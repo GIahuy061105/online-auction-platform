@@ -1,5 +1,6 @@
 import {BrowserRouter , Routes, Route ,Navigate } from 'react-router-dom';
 import { Typography , Card , ConfigProvider} from 'antd';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import LoginPage from './pages/LoginPage'
 import AuctionListPage from './pages/AuctionListPage'
 import CreateAuctionPage from './pages/CreateAuctionPage'
@@ -39,6 +40,7 @@ function App() {
               },
             }}
         >
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <BrowserRouter>
           <Routes>
               {/* Trang chính - ai cũng xem được */}
@@ -74,6 +76,7 @@ function App() {
               ))}
            </Routes>
       </BrowserRouter>
+      </GoogleOAuthProvider>
       </ConfigProvider>
   );
 }

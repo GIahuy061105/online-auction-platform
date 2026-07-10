@@ -3,17 +3,26 @@ package com.example.auction_backend.service;
 import com.example.auction_backend.dto.response.AuthResponse;
 import com.example.auction_backend.dto.request.LoginRequest;
 import com.example.auction_backend.dto.request.RegisterRequest;
+import com.example.auction_backend.dto.request.GoogleLoginRequest;
+import com.example.auction_backend.enums.Role;
 import com.example.auction_backend.model.User;
 import com.example.auction_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Random;
-
+import java.util.Collections;
+import java.util.UUID;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -21,20 +30,23 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final ResendEmailService emailService; // ← thay JavaMailSender
-
+    private final ResendEmailService emailService;
+    @Value("${google.client.id}")
+    private String googleClientId;
     public AuthResponse register(RegisterRequest request) {
         var user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .balance(BigDecimal.ZERO)
+                .role(Role.USER)
                 .build();
         repository.save(user);
         var jwtToken = jwtService.generateToken(user);
         return AuthResponse.builder()
                 .token(jwtToken)
                 .username(user.getUsername())
+                .role(user.getRole())
                 .build();
     }
 
@@ -47,6 +59,7 @@ public class AuthenticationService {
         return AuthResponse.builder()
                 .token(jwtToken)
                 .username(user.getUsername())
+                .role(user.getRole())
                 .build();
     }
 
@@ -79,5 +92,47 @@ public class AuthenticationService {
         user.setResetOtp(null);
         user.setOtpExpiryTime(null);
         repository.save(user);
+    }
+    @Transactional
+    public AuthResponse loginWithGoogle(GoogleLoginRequest request) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(request.getCredential());
+            if (idToken == null) {
+                throw new RuntimeException("Token Google không hợp lệ hoặc đã hết hạn!");
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String pictureUrl = (String) payload.get("picture");
+
+            User user = repository.findByEmail(email).orElseGet(() -> {
+                User newUser = new User();
+                newUser.setUsername(email.split("@")[0] + "_" + UUID.randomUUID().toString().substring(0, 5));
+                newUser.setEmail(email);
+                newUser.setFullName(name);
+                newUser.setAvatarUrl(pictureUrl);
+                newUser.setRole(Role.USER);
+                newUser.setBalance(BigDecimal.ZERO);
+                newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+
+                return repository.save(newUser);
+            });
+
+            String jwtToken = jwtService.generateToken(user);
+
+            return AuthResponse.builder()
+                    .token(jwtToken)
+                    .username(user.getUsername())
+                    .role(user.getRole())
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi xác thực Google: " + e.getMessage());
+        }
     }
 }

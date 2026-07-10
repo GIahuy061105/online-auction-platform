@@ -3,6 +3,7 @@ package com.example.auction_backend.controller;
 import com.example.auction_backend.dto.response.AuthResponse;
 import com.example.auction_backend.dto.request.LoginRequest;
 import com.example.auction_backend.dto.request.RegisterRequest;
+import com.example.auction_backend.dto.request.GoogleLoginRequest;
 import com.example.auction_backend.model.User;
 import com.example.auction_backend.repository.UserRepository;
 import com.example.auction_backend.service.AuthenticationService;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.Map;
 @RestController
-@RequestMapping("/api/auth") // Đường dẫn gốc cho Auth
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -37,16 +38,12 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", "Mật khẩu phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 chữ số!"));
         }
 
-        // 3. Tạo user mới và MÃ HÓA mật khẩu
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setBalance(new BigDecimal("0"));
-
-        userRepository.save(user);
-
-        return ResponseEntity.ok(Map.of("message","Đăng ký thành công!"));
+        try {
+            AuthResponse response = service.register(request);
+            return ResponseEntity.ok(Map.of("message", "Đăng ký thành công! Vui lòng đăng nhập để tiếp tục."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi hệ thống khi đăng ký: " + e.getMessage()));
+        }
     }
 
     // API Đăng nhập
@@ -83,6 +80,16 @@ public class AuthController {
             service.resetPassword(email, otp, newPassword);
             return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới."));
         } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> authenticateWithGoogle(@RequestBody GoogleLoginRequest request) {
+        try {
+            AuthResponse response = service.loginWithGoogle(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }

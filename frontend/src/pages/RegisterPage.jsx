@@ -2,6 +2,7 @@ import { Form, Input, Button, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 import api from '../services/api';
 
 const RegisterPage = () => {
@@ -23,6 +24,24 @@ const RegisterPage = () => {
             console.error("Lỗi đăng ký:", error);
             const errorMsg = error.response?.data?.message || 'Đăng ký thất bại! Username hoặc Email có thể đã tồn tại.';
             message.error(errorMsg);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        try {
+            const res = await api.post('/auth/google', {
+                credential: credentialResponse.credential
+            });
+            localStorage.setItem('token', res.data.token);
+            localStorage.setItem('username', res.data.username);
+            localStorage.setItem('role', res.data.role);
+            message.success('🎉 Xác thực Google thành công!');
+            navigate('/auction');
+        } catch (error) {
+            console.error("Lỗi Google Auth:", error);
+            message.error(error.response?.data?.message || 'Lỗi đăng nhập bằng Google!');
         } finally {
             setLoading(false);
         }
@@ -374,6 +393,18 @@ const RegisterPage = () => {
                         <div className="auth-divider-line" />
                         <span className="auth-divider-text">hoặc</span>
                         <div className="auth-divider-line" />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => {
+                            message.error('Không thể kết nối với Google');
+                        }}
+                        shape="rectangular"
+                        text="continue_with"
+                        theme="outline"
+                        size="large"
+                    />
                     </div>
 
                     <div className="auth-login-link">
