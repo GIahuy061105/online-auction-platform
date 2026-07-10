@@ -33,11 +33,11 @@ const DepositPage = () => {
     useEffect(() => {
         fetchBalance();
         if (status === 'success') {
-            message.success(`🎉 Nạp tiền thành công! +${formatCurrency(returnedAmount)}`);
-        } else if (status === 'failed') {
+            message.success(`🎉 Nạp tiền thành công!`);
+        } else if (status === 'failed' || status === 'error') {
             message.error('❌ Giao dịch thất bại hoặc bị hủy.');
         }
-    }, []);
+    }, [status]);
 
     const fetchBalance = async () => {
         try {
@@ -93,9 +93,9 @@ const DepositPage = () => {
                             <h2 className="result-title" style={{ color: isSuccess ? '#059669' : '#dc2626' }}>
                                 {isSuccess ? 'Nạp tiền thành công!' : 'Giao dịch thất bại'}
                             </h2>
-                            {isSuccess && returnedAmount && (
+                            {isSuccess && (
                                 <div className="result-amount" style={{ color: '#0ea5a0' }}>
-                                    +{formatCurrency(returnedAmount)}
+                                    Nạp tiền thành công
                                 </div>
                             )}
                             <p className="result-sub">
@@ -235,14 +235,13 @@ const DepositPage = () => {
                         <button className="deposit-btn" onClick={handleDeposit} disabled={loading}>
                             {loading
                                 ? <><Spin size="small" style={{ filter: 'brightness(10)' }} /> Đang chuyển hướng...</>
-                                : <><WalletOutlined /> Nạp tiền qua VNPay</>
+                                : <><WalletOutlined /> Nạp tiền qua ZaloPay</>
                             }
                         </button>
 
                         <div className="deposit-note">
-                            💡 Bạn sẽ được chuyển sang cổng thanh toán VNPay an toàn.<br />
-                            Số tiền sẽ được cộng vào ví ngay sau khi giao dịch thành công.<br />
-                            Thẻ test: <b>9704198526191432198</b> — NCB — OTP: <b>123456</b>
+                            💡 Bạn sẽ được chuyển sang cổng thanh toán ZaloPay an toàn.<br />
+                            Số tiền sẽ được cộng vào ví ngay sau khi giao dịch thành công.
                         </div>
                     </div>
                 </div>

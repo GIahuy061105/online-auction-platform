@@ -1,12 +1,10 @@
 package com.example.auction_backend.controller;
-import com.example.auction_backend.config.VNPayConfig;
+
 import com.example.auction_backend.model.PaymentTransaction;
 import com.example.auction_backend.model.User;
 import com.example.auction_backend.repository.PaymentTransactionRepository;
 import com.example.auction_backend.repository.UserRepository;
-import com.example.auction_backend.service.VNPayService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.example.auction_backend.service.ZaloPayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -23,80 +20,38 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PaymentController {
 
-    private final VNPayService vnPayService;
+    private final ZaloPayService zaloPayService;
     private final UserRepository userRepository;
     private final PaymentTransactionRepository transactionRepository;
-    private final VNPayConfig vnPayConfig;
 
     @PostMapping("/create")
-    public ResponseEntity<String> createPayment(@RequestParam long amount, HttpServletRequest request) throws Exception {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        if (user.getFullName() == null || user.getPhoneNumber() == null) {
-            return ResponseEntity.badRequest().body("Vui lòng cập nhật Họ tên và SĐT trong hồ sơ trước!");
-        }
-
-        String txnRef = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        String ipAddr = getClientIp(request);
-
-        transactionRepository.save(PaymentTransaction.builder()
-                .txnRef(txnRef)
-                .user(user)
-                .amount(BigDecimal.valueOf(amount))
-                .status("PENDING")
-                .createdAt(LocalDateTime.now())
-                .build());
-
-        return ResponseEntity.ok(vnPayService.createPaymentUrl(amount, txnRef, ipAddr));
-    }
-
-    @GetMapping("/vnpay-return")
-    public void vnpayReturn(@RequestParam Map<String, String> params, HttpServletResponse response) {
+    public ResponseEntity<String> createPayment(@RequestParam long amount) {
         try {
-            boolean valid = vnPayService.verifyReturn(params);
-            String responseCode = params.get("vnp_ResponseCode");
-            String txnRef = params.get("vnp_TxnRef");
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            PaymentTransaction tx = transactionRepository.findById(txnRef).orElse(null);
-
-            if (valid && "00".equals(responseCode) && tx != null && "PENDING".equals(tx.getStatus())) {
-                User user = tx.getUser();
-                user.setBalance(user.getBalance().add(tx.getAmount()));
-                userRepository.save(user);
-
-                tx.setStatus("SUCCESS");
-                transactionRepository.save(tx);
-                long returnAmount = tx.getAmount().longValue();
-                response.sendRedirect("https://sdkauction.vercel.app/deposit?status=success&amount=" + returnAmount);
-            } else {
-                response.sendRedirect("https://sdkauction.vercel.app/deposit?status=failed");
+            if (user.getFullName() == null || user.getPhoneNumber() == null) {
+                return ResponseEntity.badRequest().body("Vui lòng cập nhật Họ tên và SĐT trong hồ sơ trước!");
             }
+
+            String timeString = zaloPayService.getCurrentTimeString("yyMMdd");
+            String txnRef = timeString + "_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+
+            transactionRepository.save(PaymentTransaction.builder()
+                    .txnRef(txnRef)
+                    .user(user)
+                    .amount(BigDecimal.valueOf(amount))
+                    .status("PENDING")
+                    .createdAt(LocalDateTime.now())
+                    .build());
+
+            String orderUrl = zaloPayService.createOrder(username, amount, txnRef);
+            return ResponseEntity.ok(orderUrl);
+
         } catch (Exception e) {
             e.printStackTrace();
-            try { response.sendRedirect("https://sdkauction.vercel.app/deposit?status=error"); } catch (Exception ignored) {}
+            return ResponseEntity.badRequest().body("Có lỗi xảy ra khi tạo giao dịch: " + e.getMessage());
         }
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String[] headers = {
-                "X-Forwarded-For",
-                "X-Real-IP",
-                "Proxy-Client-IP",
-                "WL-Proxy-Client-IP"
-        };
-        for (String header : headers) {
-            String ip = request.getHeader(header);
-            if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
-                ip = ip.split(",")[0].trim();
-                return ip.length() > 15 ? ip.substring(0, 15) : ip;
-            }
-        }
-        String ip = request.getRemoteAddr();
-        if ("127.0.0.1".equals(ip) || "0:0:0:0:0:0:0:1".equals(ip)) {
-            return "1.1.1.1";
-        }
-        return ip.length() > 15 ? ip.substring(0, 15) : ip;
     }
 }
