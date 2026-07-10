@@ -45,15 +45,18 @@ public class VNPayService {
 
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
+
         for (Map.Entry<String, String> e : params.entrySet()) {
-            String encKey = URLEncoder.encode(e.getKey(), StandardCharsets.US_ASCII);
-            String encVal = URLEncoder.encode(e.getValue(), StandardCharsets.US_ASCII);
-            hashData.append(encKey).append('=').append(encVal).append('&');
-            query.append(encKey).append('=').append(encVal).append('&');
+            if (e.getValue() != null && !e.getValue().isEmpty()) {
+                String key = e.getKey();
+                String encVal = URLEncoder.encode(e.getValue(), StandardCharsets.US_ASCII);
+                hashData.append(key).append('=').append(encVal).append('&');
+                String encKey = URLEncoder.encode(key, StandardCharsets.US_ASCII);
+                query.append(encKey).append('=').append(encVal).append('&');
+            }
         }
         String hashStr = hashData.substring(0, hashData.length() - 1);
         String queryStr = query.substring(0, query.length() - 1);
-
         String secureHash = hmacSHA512(config.getHashSecret(), hashStr);
         return config.getVnpUrl() + "?" + queryStr + "&vnp_SecureHash=" + secureHash;
     }
