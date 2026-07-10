@@ -26,20 +26,29 @@ public class VNPayService {
         params.put("vnp_Amount", String.valueOf(amount * 100));
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", txnRef);
-        params.put("vnp_OrderInfo", "Nap tien SDKAuction " + txnRef);
+        params.put("vnp_OrderInfo", "Nap_tien_SDKAuction_" + txnRef);
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", "vn");
         params.put("vnp_ReturnUrl", config.getReturnUrl());
         params.put("vnp_IpAddr", ipAddr);
-        params.put("vnp_CreateDate",
-                new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+
+        TimeZone tz = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        formatter.setTimeZone(tz);
+        String vnp_CreateDate = formatter.format(new Date());
+        params.put("vnp_CreateDate", vnp_CreateDate);
+
+        Calendar cld = Calendar.getInstance(tz);
+        cld.add(Calendar.MINUTE, 15);
+        String vnp_ExpireDate = formatter.format(cld.getTime());
+        params.put("vnp_ExpireDate", vnp_ExpireDate);
 
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
         for (Map.Entry<String, String> e : params.entrySet()) {
             String encKey = URLEncoder.encode(e.getKey(), StandardCharsets.US_ASCII);
             String encVal = URLEncoder.encode(e.getValue(), StandardCharsets.US_ASCII);
-            hashData.append(e.getKey()).append('=').append(encVal).append('&');
+            hashData.append(encKey).append('=').append(encVal).append('&');
             query.append(encKey).append('=').append(encVal).append('&');
         }
         String hashStr = hashData.substring(0, hashData.length() - 1);
