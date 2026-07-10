@@ -1,6 +1,4 @@
-// controller/PaymentController.java
 package com.example.auction_backend.controller;
-
 import com.example.auction_backend.config.VNPayConfig;
 import com.example.auction_backend.model.PaymentTransaction;
 import com.example.auction_backend.model.User;
@@ -29,14 +27,13 @@ public class PaymentController {
     private final UserRepository userRepository;
     private final PaymentTransactionRepository transactionRepository;
     private final VNPayConfig vnPayConfig;
-    // Bước 1: Tạo link VNPay
+
     @PostMapping("/create")
     public ResponseEntity<String> createPayment(@RequestParam long amount, HttpServletRequest request) throws Exception {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // CHỨC NĂNG 2: Kiểm tra hồ sơ trước khi nạp tiền/đấu giá
         if (user.getFullName() == null || user.getPhoneNumber() == null) {
             return ResponseEntity.badRequest().body("Vui lòng cập nhật Họ tên và SĐT trong hồ sơ trước!");
         }
@@ -55,7 +52,6 @@ public class PaymentController {
         return ResponseEntity.ok(vnPayService.createPaymentUrl(amount, txnRef, ipAddr));
     }
 
-    // Bước 2: VNPay callback
     @GetMapping("/vnpay-return")
     public void vnpayReturn(@RequestParam Map<String, String> params, HttpServletResponse response) {
         try {
@@ -63,7 +59,6 @@ public class PaymentController {
             String responseCode = params.get("vnp_ResponseCode");
             String txnRef = params.get("vnp_TxnRef");
 
-            System.out.println("DEBUG VNPAY: Valid=" + valid + " | ResponseCode=" + responseCode + " | TxnRef=" + txnRef);
             PaymentTransaction tx = transactionRepository.findById(txnRef).orElse(null);
 
             if (valid && "00".equals(responseCode) && tx != null && "PENDING".equals(tx.getStatus())) {
@@ -73,11 +68,9 @@ public class PaymentController {
 
                 tx.setStatus("SUCCESS");
                 transactionRepository.save(tx);
-
-                response.sendRedirect("https://sdkauction.vercel.app/deposit?status=success");
+                long returnAmount = tx.getAmount().longValue();
+                response.sendRedirect("https://sdkauction.vercel.app/deposit?status=success&amount=" + returnAmount);
             } else {
-                if (!valid) System.out.println("Lỗi: Chữ ký không hợp lệ!");
-                if (tx == null) System.out.println("Lỗi: Không tìm thấy giao dịch " + txnRef);
                 response.sendRedirect("https://sdkauction.vercel.app/deposit?status=failed");
             }
         } catch (Exception e) {
@@ -85,6 +78,7 @@ public class PaymentController {
             try { response.sendRedirect("https://sdkauction.vercel.app/deposit?status=error"); } catch (Exception ignored) {}
         }
     }
+
     private String getClientIp(HttpServletRequest request) {
         String[] headers = {
                 "X-Forwarded-For",
@@ -95,13 +89,14 @@ public class PaymentController {
         for (String header : headers) {
             String ip = request.getHeader(header);
             if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
-                return ip.split(",")[0].trim();
+                ip = ip.split(",")[0].trim();
+                return ip.length() > 15 ? ip.substring(0, 15) : ip;
             }
         }
         String ip = request.getRemoteAddr();
         if ("127.0.0.1".equals(ip) || "0:0:0:0:0:0:0:1".equals(ip)) {
             return "1.1.1.1";
         }
-        return ip;
+        return ip.length() > 15 ? ip.substring(0, 15) : ip;
     }
 }
