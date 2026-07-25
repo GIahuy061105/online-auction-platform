@@ -46,6 +46,8 @@ public class ZaloPayService {
         requestBody.add("description", "Nap tien SDKAuction - #" + txnRef);
         requestBody.add("mac", mac);
 
+        requestBody.add("callback_url", "https://online-auction-platform-fd3n.onrender.com/api/payment/zalopay-callback");
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(requestBody, headers);
@@ -59,7 +61,7 @@ public class ZaloPayService {
         throw new Exception("Lỗi từ ZaloPay: " + response);
     }
 
-    private String hmacSHA256(String key, String data) throws Exception {
+    public String hmacSHA256(String key, String data) throws Exception {
         Mac hmac256 = Mac.getInstance("HmacSHA256");
         SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         hmac256.init(secretKey);
