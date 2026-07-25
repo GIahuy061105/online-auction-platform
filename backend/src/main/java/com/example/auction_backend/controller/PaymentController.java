@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,10 +40,8 @@ public class PaymentController {
             if (user.getFullName() == null || user.getPhoneNumber() == null) {
                 return ResponseEntity.badRequest().body("Vui lòng cập nhật Họ tên và SĐT trong hồ sơ trước!");
             }
-
             String timeString = zaloPayService.getCurrentTimeString("yyMMdd");
             String txnRef = timeString + "_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-
             transactionRepository.save(PaymentTransaction.builder()
                     .txnRef(txnRef)
                     .user(user)
@@ -50,7 +49,6 @@ public class PaymentController {
                     .status("PENDING")
                     .createdAt(LocalDateTime.now())
                     .build());
-
             String orderUrl = zaloPayService.createOrder(username, amount, txnRef);
             return ResponseEntity.ok(orderUrl);
 
@@ -59,25 +57,34 @@ public class PaymentController {
             return ResponseEntity.badRequest().body("Có lỗi xảy ra khi tạo giao dịch: " + e.getMessage());
         }
     }
-    @PostMapping(value = "/zalopay-callback", produces = "application/json;charset=UTF-8")
-    public ResponseEntity<?> zalopayCallback(@RequestBody Map<String, Object> callbackData) {
-        System.out.println("🚀🚀🚀 ĐÃ NHẬN ĐƯỢC WEBHOOK TỪ ZALOPAY: " + callbackData);
+    @PostMapping("/zalopay-callback")
+    public ResponseEntity<Map<String, Object>> zalopayCallback(@RequestBody Map<String, Object> callbackData) {
+        System.out.println("🚀🚀🚀 ZALOPAY GỌI WEBHOOK: " + callbackData);
+        Map<String, Object> result = new HashMap<>();
         try {
             String dataStr = (String) callbackData.get("data");
             String reqMac = (String) callbackData.get("mac");
-
             String mac = zaloPayService.hmacSHA256(zaloPayConfig.getKey2(), dataStr);
             if (!reqMac.equals(mac)) {
-                return ResponseEntity.badRequest().body("{\"return_code\": -1, \"return_message\": \"mac not equal\"}");
+                System.out.println("❌ LỖI: Chữ ký MAC không khớp! (Có thể sai Key2)");
+                result.put("return_code", -1);
+                result.put("return_message", "mac not equal");
+                return ResponseEntity.ok(result);
             }
 
             ObjectMapper mapper = new ObjectMapper();
             JsonNode dataJson = mapper.readTree(dataStr);
             String appTransId = dataJson.get("app_trans_id").asText();
 
+            System.out.println("🔍 Đang tìm giao dịch trong Database: " + appTransId);
+
             PaymentTransaction tx = transactionRepository.findById(appTransId).orElse(null);
 
-            if (tx != null && "PENDING".equals(tx.getStatus())) {
+            if (tx == null) {
+                System.out.println("❌ LỖI: Không tìm thấy giao dịch " + appTransId + " trong DB!");
+            } else if (!"PENDING".equals(tx.getStatus())) {
+                System.out.println("⚠️ Giao dịch này đã được cộng tiền trước đó rồi!");
+            } else {
                 User user = tx.getUser();
                 user.setBalance(user.getBalance().add(tx.getAmount()));
                 userRepository.save(user);
@@ -85,12 +92,19 @@ public class PaymentController {
                 tx.setStatus("SUCCESS");
                 transactionRepository.save(tx);
 
-                System.out.println("✅ Đã cộng " + tx.getAmount() + " VND vào tài khoản: " + user.getUsername());
+                System.out.println("✅ THÀNH CÔNG: Đã cộng " + tx.getAmount() + " VND vào ví của " + user.getUsername());
             }
-            return ResponseEntity.ok("{\"return_code\": 1, \"return_message\": \"success\"}");
+            result.put("return_code", 1);
+            result.put("return_message", "success");
+            return ResponseEntity.ok(result);
+
         } catch (Exception e) {
+            System.out.println("❌ LỖI HỆ THỐNG: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.badRequest().body("{\"return_code\": 0, \"return_message\": \"fail\"}");
+
+            result.put("return_code", 0);
+            result.put("return_message", e.getMessage());
+            return ResponseEntity.ok(result);
         }
     }
 }
