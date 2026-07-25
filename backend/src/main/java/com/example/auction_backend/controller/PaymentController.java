@@ -57,33 +57,33 @@ public class PaymentController {
             return ResponseEntity.badRequest().body("Có lỗi xảy ra khi tạo giao dịch: " + e.getMessage());
         }
     }
-    @PostMapping("/zalopay-callback")
-    public ResponseEntity<Map<String, Object>> zalopayCallback(@RequestBody Map<String, Object> callbackData) {
-        System.out.println("🚀🚀🚀 ZALOPAY GỌI WEBHOOK: " + callbackData);
+    @PostMapping(value = "/zalopay-callback", produces = "application/json;charset=UTF-8")
+    public ResponseEntity<Map<String, Object>> zalopayCallback(@RequestBody String rawPayload) {
         Map<String, Object> result = new HashMap<>();
         try {
-            String dataStr = (String) callbackData.get("data");
-            String reqMac = (String) callbackData.get("mac");
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(rawPayload);
+
+            String dataStr = root.get("data").asText();
+            String reqMac = root.get("mac").asText();
+
+            System.out.println("🔑 Key2 Server đang cầm: [" + zaloPayConfig.getKey2() + "]");
+
             String mac = zaloPayService.hmacSHA256(zaloPayConfig.getKey2(), dataStr);
             if (!reqMac.equals(mac)) {
-                System.out.println("❌ LỖI: Chữ ký MAC không khớp! (Có thể sai Key2)");
+                System.out.println("❌ LỖI MAC - Của ZaloPay: " + reqMac + " | Server tự tính: " + mac);
                 result.put("return_code", -1);
                 result.put("return_message", "mac not equal");
                 return ResponseEntity.ok(result);
             }
-
-            ObjectMapper mapper = new ObjectMapper();
             JsonNode dataJson = mapper.readTree(dataStr);
             String appTransId = dataJson.get("app_trans_id").asText();
-
-            System.out.println("🔍 Đang tìm giao dịch trong Database: " + appTransId);
-
+            System.out.println("🔍 MAC Hợp lệ! Đang xử lý giao dịch: " + appTransId);
             PaymentTransaction tx = transactionRepository.findById(appTransId).orElse(null);
-
             if (tx == null) {
-                System.out.println("❌ LỖI: Không tìm thấy giao dịch " + appTransId + " trong DB!");
+                System.out.println("❌ LỖI: Không tìm thấy giao dịch trong DB!");
             } else if (!"PENDING".equals(tx.getStatus())) {
-                System.out.println("⚠️ Giao dịch này đã được cộng tiền trước đó rồi!");
+                System.out.println("⚠️ Giao dịch này đã được xử lý trước đó rồi.");
             } else {
                 User user = tx.getUser();
                 user.setBalance(user.getBalance().add(tx.getAmount()));
@@ -94,6 +94,7 @@ public class PaymentController {
 
                 System.out.println("✅ THÀNH CÔNG: Đã cộng " + tx.getAmount() + " VND vào ví của " + user.getUsername());
             }
+
             result.put("return_code", 1);
             result.put("return_message", "success");
             return ResponseEntity.ok(result);
