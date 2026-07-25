@@ -34,7 +34,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Cho phép Swagger
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/payment/vnpay-return").permitAll()
+                        .requestMatchers("/api/payment/zalopay-callback").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/auctions",
