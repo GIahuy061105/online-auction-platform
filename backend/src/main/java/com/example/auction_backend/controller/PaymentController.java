@@ -59,8 +59,9 @@ public class PaymentController {
             return ResponseEntity.badRequest().body("Có lỗi xảy ra khi tạo giao dịch: " + e.getMessage());
         }
     }
-    @PostMapping("/zalopay-callback")
+    @PostMapping(value = "/zalopay-callback", produces = "application/json;charset=UTF-8")
     public ResponseEntity<?> zalopayCallback(@RequestBody Map<String, Object> callbackData) {
+        System.out.println("🚀🚀🚀 ĐÃ NHẬN ĐƯỢC WEBHOOK TỪ ZALOPAY: " + callbackData);
         try {
             String dataStr = (String) callbackData.get("data");
             String reqMac = (String) callbackData.get("mac");

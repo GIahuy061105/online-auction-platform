@@ -27,11 +27,11 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF triệt để
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Kích hoạt CORS
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Cho phép Login/Register
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Cho phép Swagger
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/payment/zalopay-callback").permitAll()
@@ -44,7 +44,7 @@ public class SecurityConfiguration {
                         ).permitAll()
                         .requestMatchers("/api/wishlists/**").authenticated()
                         .requestMatchers("/api/ping").permitAll()
-                        .anyRequest().authenticated() // Còn lại phải có Token
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -54,7 +54,6 @@ public class SecurityConfiguration {
         return http.build();
     }
 
-    // Cấu hình CORS để Swagger không bị chặn
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
