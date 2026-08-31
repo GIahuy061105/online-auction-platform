@@ -71,9 +71,9 @@ public class PaymentController {
             if (!reqMac.equals(mac)) {
                 System.out.println("❌ LỖI MAC - ZaloPay gửi: " + reqMac + " | Server tính: " + mac);
                 System.out.println("⚠️ Môi trường Sandbox bị lệch chuỗi. TẠM THỜI BỎ QUA CHECK MAC ĐỂ CỘNG TIỀN!");
-                //return ResponseEntity.ok()
-                //      .contentType(MediaType.APPLICATION_JSON)
-                // .body("{\"return_code\": -1, \"return_message\": \"mac not equal\"}");
+                return ResponseEntity.ok()
+                      .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"return_code\": -1, \"return_message\": \"mac not equal\"}");
             }
             JsonNode dataJson = mapper.readTree(dataStr);
             String appTransId = dataJson.get("app_trans_id").asText();
